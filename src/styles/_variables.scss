@@ -1,0 +1,37 @@
+// Palette
+$violet-50: #f5f3ff;
+$violet-100: #ede9fe;
+$violet-200: #ddd6fe;
+$violet-300: #c4b5fd;
+$violet-400: #a78bfa;
+$violet-500: #8b5cf6;
+$violet-600: #7c3aed;
+$violet-700: #6d28d9;
+$violet-800: #5b21b6;
+$violet-900: #4c1d95;
+$violet-950: #2e1065;
+
+$white: #ffffff;
+$black: #000000;
+$gray-100: #f3f4f6;
+$gray-800: #1f2937;
+$gray-900: #111827;
+
+// Semantic Tokens
+:root {
+  --color-primary: #{$violet-600};
+  --color-primary-hover: #{$violet-700};
+  --color-background: #{$white};
+  --color-text: #{$gray-900};
+  --color-border: #{$gray-100};
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: #{$violet-400};
+    --color-primary-hover: #{$violet-300};
+    --color-background: #{$gray-900};
+    --color-text: #{$gray-100};
+    --color-border: #{$gray-800};
+  }
+}
