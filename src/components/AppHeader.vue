@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { productService } from '@/services/productService'
 import ThemeToggle from '@/components/ThemeToggle.vue'
+import { formatCategory } from '@/utils/formatters'
 import logo from '@/assets/ennesimo_logo.png'
 
 // Categories Logic
@@ -23,13 +24,6 @@ onMounted(() => {
   fetchCategories()
 })
 
-// Helper to capitalize first letter of words
-const formatCategory = (cat: string) => {
-  return cat
-    .split(' ')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
-}
 </script>
 
 <template>
@@ -45,7 +39,7 @@ const formatCategory = (cat: string) => {
         <router-link
           v-for="category in categories"
           :key="category"
-          :to="`/category/${category}`"
+          :to="{ path: '/', query: { category } }"
           class="nav-link"
         >
           {{ formatCategory(category) }}
