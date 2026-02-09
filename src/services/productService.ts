@@ -14,4 +14,8 @@ export const productService = {
   async getProductsByCategory(category: string): Promise<Product[]> {
     return api.get<Product[]>(`/products/category/${category}`);
   },
+
+  async getProductById(id: number): Promise<Product> {
+    return api.get<Product>(`/products/${id}`);
+  },
 };
