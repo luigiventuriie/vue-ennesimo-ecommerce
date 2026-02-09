@@ -10,3 +10,22 @@ export interface Product {
     count: number
   }
 }
+
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  name: {
+    firstname: string;
+    lastname: string;
+  };
+}
+
+export interface LoginCredentials {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  token: string;
+}
