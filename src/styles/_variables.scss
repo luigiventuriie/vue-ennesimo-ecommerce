@@ -1,5 +1,7 @@
-// Palette
-$violet-50: #f5f3ff;
+// -----------------------------------------------------------------------------
+// Color Palette (Violet / Lilac Theme)
+// -----------------------------------------------------------------------------
+$violet-50:  #f5f3ff;
 $violet-100: #ede9fe;
 $violet-200: #ddd6fe;
 $violet-300: #c4b5fd;
@@ -11,27 +13,75 @@ $violet-800: #5b21b6;
 $violet-900: #4c1d95;
 $violet-950: #2e1065;
 
-$white: #ffffff;
-$black: #000000;
+// Neutrals
+$white:    #ffffff;
+$black:    #000000;
+$gray-50:  #f9fafb;
 $gray-100: #f3f4f6;
+$gray-200: #e5e7eb;
+$gray-300: #d1d5db;
+$gray-400: #9ca3af;
+$gray-500: #6b7280;
+$gray-600: #4b5563;
+$gray-700: #374151;
 $gray-800: #1f2937;
 $gray-900: #111827;
+$gray-950: #030712;
 
-// Semantic Tokens
+// Functional Colors
+$success: #10b981; // Emerald-500
+$warning: #f59e0b; // Amber-500
+$error:   #ef4444; // Red-500
+
+// -----------------------------------------------------------------------------
+// Semantic Configuration (CSS Variables)
+// -----------------------------------------------------------------------------
 :root {
-  --color-primary: #{$violet-600};
-  --color-primary-hover: #{$violet-700};
-  --color-background: #{$white};
-  --color-text: #{$gray-900};
-  --color-border: #{$gray-100};
+  // Brand
+  --color-primary:        #{$violet-600};
+  --color-primary-hover:  #{$violet-700};
+  --color-primary-light:  #{$violet-100};
+  
+  // Backgrounds
+  --bg-body:              #{$gray-50};
+  --bg-card:              #{$white};
+  --bg-overlay:           rgba(0, 0, 0, 0.5);
+
+  // Text
+  --text-primary:         #{$gray-900};
+  --text-secondary:       #{$gray-600};
+  --text-inverse:         #{$white};
+
+  // Borders
+  --border-color:         #{$gray-200};
+  --border-focus:         #{$violet-400};
+
+  // Status
+  --color-success:        #{$success};
+  --color-warning:        #{$warning};
+  --color-error:          #{$error};
+
+  // Sizes
+  --header-height:        64px;
+  --container-width:      1280px;
+  --radius-sm:            0.25rem;
+  --radius-md:            0.5rem;
+  --radius-lg:            1rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-primary: #{$violet-400};
-    --color-primary-hover: #{$violet-300};
-    --color-background: #{$gray-900};
-    --color-text: #{$gray-100};
-    --color-border: #{$gray-800};
-  }
+// -----------------------------------------------------------------------------
+// Dark Mode Overrides
+// -----------------------------------------------------------------------------
+
+
+// Manual Override Class (e.g. added to <html class="dark">)
+:root.dark {
+  --bg-body:              #{$gray-950};
+  --bg-card:              #{$gray-900};
+  --text-primary:         #{$gray-100};
+  --text-secondary:       #{$gray-400};
+  --border-color:         #{$gray-800};
+  --color-primary:        #{$violet-500};
+  --color-primary-hover:  #{$violet-400};
+  --color-primary-light:  rgba(139, 92, 246, 0.2);
 }
