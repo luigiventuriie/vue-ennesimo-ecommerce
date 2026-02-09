@@ -6,8 +6,12 @@ export const productService = {
   async getCategories(): Promise<string[]> {
     return api.get<string[]>('/products/categories');
   },
-  
-  async getAllProducts(): Promise<Product[]> {
+
+  async getProducts(): Promise<Product[]> {
     return api.get<Product[]>('/products');
-  }
+  },
+
+  async getProductsByCategory(category: string): Promise<Product[]> {
+    return api.get<Product[]>(`/products/category/${category}`);
+  },
 };

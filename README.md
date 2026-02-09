@@ -24,6 +24,7 @@ npm run build
 
 ```sh
 npm run test:unit
+npm run test:unit -- --reporter verbose
 ```
 
 ### Run End-to-End Tests with [Cypress](https://www.cypress.io/)
