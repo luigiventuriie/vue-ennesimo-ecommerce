@@ -1,5 +1,316 @@
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
+import type { Product } from '@/types';
+import { productService } from '@/services/productService';
+import { formatCategory } from '@/utils/formatters';
+
+const route = useRoute();
+const product = ref<Product | null>(null);
+const isLoading = ref(true);
+const error = ref<string | null>(null);
+
+const fetchProduct = async () => {
+  const idParam = route.params.id;
+  const id = Number(idParam);
+  
+  if (!idParam || isNaN(id)) {
+    error.value = 'Invalid product ID.';
+    isLoading.value = false;
+    return;
+  }
+
+  try {
+    isLoading.value = true;
+    error.value = null;
+    product.value = await productService.getProductById(id);
+  } catch (err) {
+    error.value = 'Failed to load product details. Please try again later.';
+    console.error('Error fetching product:', err);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Re-fetch when ID changes (e.g., navigating between products)
+import { watch } from 'vue';
+watch(() => route.params.id, () => {
+  fetchProduct();
+});
+
+onMounted(() => {
+  fetchProduct();
+});
+</script>
+
 <template>
-  <div class="product">
-    <h1>Product Details</h1>
+  <div class="product-view">
+    <!-- Back Navigation -->
+    <router-link to="/" class="back-link">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      Back to collection
+    </router-link>
+
+    <!-- Loading State -->
+    <div v-if="isLoading" class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading product details...</p>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="error-state">
+      <div class="error-icon">⚠️</div>
+      <p>{{ error }}</p>
+      <button @click="fetchProduct" class="retry-btn">Try Again</button>
+    </div>
+
+    <!-- Product Content -->
+    <div v-else-if="product" class="product-container">
+      <div class="product-grid">
+        <!-- Image Section -->
+        <div class="image-section">
+          <div class="image-wrapper">
+            <img :src="product.image" :alt="product.title" class="product-image" />
+          </div>
+        </div>
+
+        <!-- Info Section -->
+        <div class="info-section">
+          <span class="category-tag">{{ formatCategory(product.category) }}</span>
+          <h1 class="product-title">{{ product.title }}</h1>
+          
+          <div class="rating-box">
+            <div class="stars">
+              <span v-for="i in 5" :key="i" :class="['star', { active: i <= Math.round(product.rating.rate) }]">★</span>
+            </div>
+            <span class="rating-text">{{ product.rating.rate }} ({{ product.rating.count }} reviews)</span>
+          </div>
+
+          <div class="price-box">
+            <span class="price">${{ product.price.toFixed(2) }}</span>
+          </div>
+
+          <div class="description-box">
+            <h2 class="section-title">Description</h2>
+            <p class="description">{{ product.description }}</p>
+          </div>
+
+          <div class="actions-box">
+            <button class="add-to-cart-btn">
+              Add to Cart
+            </button>
+            <button class="wishlist-btn" title="Add to Wishlist">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
+
+<style scoped lang="scss">
+.product-view {
+  max-width: var(--container-width);
+  margin: 0 auto;
+  padding: 1rem 1rem 4rem;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.875rem;
+  margin-bottom: 2rem;
+  transition: color 0.2s;
+
+  &:hover {
+    color: var(--color-primary);
+  }
+}
+
+.loading-state, .error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8rem 0;
+  text-align: center;
+  gap: 2rem;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--color-primary-light);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+
+  @media (min-width: 1024px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.image-section {
+  .image-wrapper {
+    background-color: white;
+    border-radius: var(--radius-xl);
+    padding: 3rem;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .product-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+}
+
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.category-tag {
+  display: inline-block;
+  align-self: flex-start;
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.product-title {
+  font-size: 2rem;
+  line-height: 1.2;
+  color: var(--text-primary);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.rating-box {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stars {
+  color: var(--color-divider);
+  font-size: 1.25rem;
+
+  .star.active {
+    color: #f59e0b; // Yellow-500
+  }
+}
+
+.rating-text {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.price-box {
+  .price {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--color-primary);
+  }
+}
+
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+}
+
+.description {
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.actions-box {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.add-to-cart-btn {
+  flex: 1;
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: var(--color-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.wishlist-btn {
+  width: 52px;
+  height: 52px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    color: #ef4444; // Red-500
+    border-color: #fecaca; // Red-200
+    background-color: #fef2f2; // Red-50
+  }
+}
+
+.retry-btn {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--color-primary);
+  color: white;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--color-primary-hover);
+  }
+}
+</style>
