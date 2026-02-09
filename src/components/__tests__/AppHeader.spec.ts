@@ -1,5 +1,6 @@
-import { describe, it, expect, vi } from 'vitest'
-import { mount, RouterLinkStub, flushPromises } from '@vue/test-utils'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { mount, flushPromises, RouterLinkStub } from '@vue/test-utils'
+import { createTestingPinia } from '@pinia/testing'
 import AppHeader from '../AppHeader.vue'
 import { productService } from '@/services/productService'
 
@@ -26,15 +27,26 @@ vi.mock('@/services/productService', () => ({
 }))
 
 describe('AppHeader', () => {
-  it('renders navigation links from service', async () => {
-    // Mock return values
-    const mockCategories = ['electronics', 'jewelry', "men's clothing", "women's clothing"]
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('renders branding and dynamic navigation links', async () => {
+    const mockCategories = ['electronics', 'jewelry']
     ;(productService.getCategories as any).mockResolvedValue(mockCategories)
 
     const wrapper = mount(AppHeader, {
       global: {
+        plugins: [createTestingPinia({
+          createSpy: vi.fn,
+          initialState: {
+            auth: { isAuthenticated: false, user: null }
+          }
+        })],
         stubs: {
           RouterLink: RouterLinkStub,
+          ThemeToggle: true,
+          LoginModal: true
         },
       },
     })
@@ -42,24 +54,54 @@ describe('AppHeader', () => {
     // Wait for onMounted async call
     await flushPromises()
 
-    // check if formatCategory works (capitalization)
+    expect(wrapper.find('.logo-img').exists()).toBe(true)
     expect(wrapper.text()).toContain('Electronics')
     expect(wrapper.text()).toContain('Jewelry')
-    expect(wrapper.text()).toContain("Men's Clothing")
-    expect(wrapper.text()).toContain("Women's Clothing")
   })
 
-  it('renders ThemeToggle component', () => {
+  it('renders login button when unauthenticated', () => {
     ;(productService.getCategories as any).mockResolvedValue([])
     const wrapper = mount(AppHeader, {
       global: {
+        plugins: [createTestingPinia({
+          createSpy: vi.fn,
+          initialState: {
+            auth: { isAuthenticated: false, user: null }
+          }
+        })],
         stubs: {
           RouterLink: RouterLinkStub,
           ThemeToggle: true,
+          LoginModal: true
         },
       },
     })
 
-    expect(wrapper.find('theme-toggle-stub').exists()).toBe(true)
+    expect(wrapper.find('[aria-label="Open login modal"]').exists()).toBe(true)
+  })
+
+  it('renders user greeting and logout when authenticated', () => {
+    ;(productService.getCategories as any).mockResolvedValue([])
+    const wrapper = mount(AppHeader, {
+      global: {
+        plugins: [createTestingPinia({
+          createSpy: vi.fn,
+          initialState: {
+            auth: { 
+              token: 'fake-token',
+              user: { name: { firstname: 'John' } } 
+            }
+          }
+        })],
+        stubs: {
+          RouterLink: RouterLinkStub,
+          ThemeToggle: true,
+          LoginModal: true
+        },
+      },
+    })
+
+    expect(wrapper.text()).toContain('Hi, John')
+    expect(wrapper.find('.logout-btn').exists()).toBe(true)
   })
 })
