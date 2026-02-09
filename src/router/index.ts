@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import DefaultLayout from '@/layouts/DefaultLayout.vue'
+
 import HomeView from '@/views/HomeView.vue'
 
 const router = createRouter({
@@ -7,24 +7,18 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      component: DefaultLayout,
-      children: [
-        {
-          path: '',
-          name: 'home',
-          component: HomeView,
-        },
-        {
-          path: 'product/:id',
-          name: 'product',
-          component: () => import('../views/ProductView.vue'), // Lazy load
-        },
-      ],
+      name: 'home',
+      component: HomeView,
+    },
+    {
+      path: '/product/:id',
+      name: 'product',
+      component: () => import('../views/ProductView.vue'),
     },
     {
       path: '/login',
       name: 'login',
-      component: () => import('../views/LoginView.vue'), // Lazy load
+      component: () => import('../views/LoginView.vue'),
     },
   ],
 })
