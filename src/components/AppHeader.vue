@@ -6,6 +6,7 @@ import LoginModal from '@/components/LoginModal.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
 import { useWishlistStore } from '@/stores/wishlist'
+import { useSearchStore } from '@/stores/search'
 import { useRouter, useRoute } from 'vue-router'
 import { formatCategory } from '@/utils/formatters'
 import logo from '@/assets/ennesimo_logo.png'
@@ -13,6 +14,7 @@ import logo from '@/assets/ennesimo_logo.png'
 const authStore = useAuthStore()
 const cartStore = useCartStore()
 const wishlistStore = useWishlistStore()
+const searchStore = useSearchStore()
 const router = useRouter()
 const route = useRoute()
 const isLoginModalOpen = ref(false)
@@ -65,9 +67,34 @@ onMounted(() => {
   <header class="app-header">
     <div class="container">
       <!-- Logo -->
-      <router-link to="/" class="logo">
+      <router-link to="/" class="logo" @click="searchStore.clearSearch">
         <img :src="logo" alt="Ennesimo logo" class="logo-img" />
       </router-link>
+
+      <!-- Search Bar -->
+      <div class="search-container">
+        <div class="search-wrapper">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input 
+            type="text" 
+            v-model="searchStore.searchQuery"
+            placeholder="Search products..." 
+            class="search-input"
+            @focus="router.push('/')"
+          />
+          <button 
+            v-if="searchStore.searchQuery" 
+            @click="searchStore.clearSearch"
+            class="clear-search"
+            aria-label="Clear search"
+          >
+            &times;
+          </button>
+        </div>
+      </div>
 
       <!-- Desktop Nav -->
       <nav class="desktop-nav">
@@ -96,7 +123,7 @@ onMounted(() => {
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
           </svg>
-          <span v-if="wishlistStore.totalItems > 0" class="cart-badge">
+          <span v-if="wishlistStore.totalItems > 0" :key="wishlistStore.totalItems" class="cart-badge">
             {{ wishlistStore.totalItems }}
           </span>
         </button>
@@ -113,7 +140,7 @@ onMounted(() => {
             <circle cx="20" cy="21" r="1"></circle>
             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
           </svg>
-          <span v-if="cartStore.totalItems > 0" class="cart-badge">
+          <span v-if="cartStore.totalItems > 0" :key="cartStore.totalItems" class="cart-badge">
             {{ cartStore.totalItems }}
           </span>
         </button>
@@ -211,6 +238,73 @@ onMounted(() => {
     height: 30px; // adjust as needed
     width: auto;
     display: block;
+  }
+}
+
+.search-container {
+  flex: 1;
+  max-width: 400px;
+  margin: 0 1.5rem;
+  display: none;
+
+  @media (min-width: 640px) {
+    display: block;
+  }
+}
+
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 0.6rem 2.5rem 0.6rem 2.5rem;
+    background-color: var(--bg-body);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    transition: all 0.2s;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      background-color: var(--bg-card);
+      box-shadow: 0 0 0 3px var(--color-primary-light);
+    }
+  }
+
+  .clear-search {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.25rem;
+    cursor: pointer;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+
+    &:hover {
+      background-color: var(--border-color);
+      color: var(--text-primary);
+    }
   }
 }
 
