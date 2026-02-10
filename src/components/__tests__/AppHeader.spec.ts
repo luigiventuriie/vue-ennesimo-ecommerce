@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises, RouterLinkStub } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
+import { createRouter, createWebHistory } from 'vue-router'
 import AppHeader from '../AppHeader.vue'
 import { productService } from '@/services/productService'
 
@@ -27,8 +28,22 @@ vi.mock('@/services/productService', () => ({
 }))
 
 describe('AppHeader', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
+  let router: any;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    router = createRouter({
+      history: createWebHistory(),
+      routes: [
+        { path: '/', name: 'home', component: { template: '<div>Home</div>' } },
+        { 
+          path: '/cart', 
+          name: 'cart', 
+          component: { template: '<div>Cart</div>' },
+          meta: { requiresAuth: true } 
+        }
+      ]
+    });
   })
 
   it('renders branding and dynamic navigation links', async () => {
@@ -37,14 +52,18 @@ describe('AppHeader', () => {
 
     const wrapper = mount(AppHeader, {
       global: {
-        plugins: [createTestingPinia({
-          createSpy: vi.fn,
-          initialState: {
-            auth: { isAuthenticated: false, user: null }
-          }
-        })],
+        plugins: [
+          router,
+          createTestingPinia({
+            createSpy: vi.fn,
+            initialState: {
+              auth: { isAuthenticated: false, user: null },
+              cart: { items: [] }
+            }
+          })
+        ],
         stubs: {
-          RouterLink: RouterLinkStub,
+          // RouterLink: RouterLinkStub, // Use real router but stub components
           ThemeToggle: true,
           LoginModal: true
         },
@@ -63,14 +82,17 @@ describe('AppHeader', () => {
     ;(productService.getCategories as any).mockResolvedValue([])
     const wrapper = mount(AppHeader, {
       global: {
-        plugins: [createTestingPinia({
-          createSpy: vi.fn,
-          initialState: {
-            auth: { isAuthenticated: false, user: null }
-          }
-        })],
+        plugins: [
+          router,
+          createTestingPinia({
+            createSpy: vi.fn,
+            initialState: {
+              auth: { isAuthenticated: false, user: null },
+              cart: { items: [] }
+            }
+          })
+        ],
         stubs: {
-          RouterLink: RouterLinkStub,
           ThemeToggle: true,
           LoginModal: true
         },
@@ -78,23 +100,27 @@ describe('AppHeader', () => {
     })
 
     expect(wrapper.find('[aria-label="Open login modal"]').exists()).toBe(true)
+    expect(wrapper.find('.cart-btn').exists()).toBe(false)
   })
 
   it('renders user greeting and logout when authenticated', () => {
     ;(productService.getCategories as any).mockResolvedValue([])
     const wrapper = mount(AppHeader, {
       global: {
-        plugins: [createTestingPinia({
-          createSpy: vi.fn,
-          initialState: {
-            auth: { 
-              token: 'fake-token',
-              user: { name: { firstname: 'John' } } 
+        plugins: [
+          router,
+          createTestingPinia({
+            createSpy: vi.fn,
+            initialState: {
+              auth: { 
+                token: 'fake-token',
+                user: { name: { firstname: 'John' } } 
+              },
+              cart: { items: [] }
             }
-          }
-        })],
+          })
+        ],
         stubs: {
-          RouterLink: RouterLinkStub,
           ThemeToggle: true,
           LoginModal: true
         },
@@ -103,5 +129,58 @@ describe('AppHeader', () => {
 
     expect(wrapper.text()).toContain('Hi, John')
     expect(wrapper.find('.logout-btn').exists()).toBe(true)
+  })
+
+  it('renders cart badge with correct count', () => {
+    ;(productService.getCategories as any).mockResolvedValue([])
+    const wrapper = mount(AppHeader, {
+      global: {
+        plugins: [
+          router,
+          createTestingPinia({
+            createSpy: vi.fn,
+            initialState: {
+              auth: { token: 'fake-token' },
+              cart: { items: [{ id: 1, quantity: 3 }] }
+            }
+          })
+        ],
+        stubs: {
+          ThemeToggle: true,
+          LoginModal: true
+        },
+      },
+    })
+
+    expect(wrapper.find('.cart-btn').exists()).toBe(true)
+    expect(wrapper.find('.cart-badge').text()).toBe('3')
+  })
+
+  it('redirects to home when logging out from a protected route', async () => {
+    // Setup router at /cart
+    await router.push('/cart')
+    await router.isReady()
+    
+    const wrapper = mount(AppHeader, {
+      global: {
+        plugins: [
+          router,
+          createTestingPinia({
+            createSpy: vi.fn,
+            initialState: {
+              auth: { token: 'fake-token', user: { name: { firstname: 'John' } } },
+              cart: { items: [] }
+            }
+          })
+        ],
+        stubs: { ThemeToggle: true, LoginModal: true },
+      },
+    })
+
+    const pushSpy = vi.spyOn(router, 'push')
+    
+    await wrapper.find('.logout-btn').trigger('click')
+    
+    expect(pushSpy).toHaveBeenCalledWith('/')
   })
 })

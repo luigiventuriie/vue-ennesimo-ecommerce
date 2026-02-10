@@ -29,3 +29,7 @@ export interface LoginCredentials {
 export interface LoginResponse {
   token: string;
 }
+
+export interface CartItem extends Product {
+  quantity: number;
+}
