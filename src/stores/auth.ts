@@ -4,6 +4,9 @@ import Cookies from 'js-cookie';
 import { authService } from '@/services/authService';
 import { api } from '@/services/api';
 import type { LoginCredentials, User } from '@/types';
+import { useCartStore } from '@/stores/cart';
+import { useWishlistStore } from '@/stores/wishlist';
+import { useSearchStore } from '@/stores/search';
 
 const TOKEN_KEY = 'ennesimo_auth_token';
 const USER_KEY = 'ennesimo_user_data';
@@ -69,6 +72,11 @@ export const useAuthStore = defineStore('auth', () => {
     Cookies.remove(TOKEN_KEY);
     Cookies.remove(USER_KEY);
     api.setToken(null);
+
+    // Reset other stores
+    useCartStore().clearCart();
+    useWishlistStore().clearWishlist();
+    useSearchStore().clearSearch();
   }
 
   return {

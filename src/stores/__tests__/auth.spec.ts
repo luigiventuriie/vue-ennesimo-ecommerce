@@ -4,6 +4,9 @@ import { useAuthStore } from '../auth'
 import { authService } from '@/services/authService'
 import Cookies from 'js-cookie'
 import { api } from '@/services/api'
+import { useCartStore } from '@/stores/cart'
+import { useWishlistStore } from '@/stores/wishlist'
+import { useSearchStore } from '@/stores/search'
 
 // Mock dependencies
 vi.mock('@/services/authService')
@@ -13,6 +16,13 @@ vi.mock('@/services/api', () => ({
     setToken: vi.fn(),
   },
 }))
+const mockCartStore = { clearCart: vi.fn() }
+const mockWishlistStore = { clearWishlist: vi.fn() }
+const mockSearchStore = { clearSearch: vi.fn() }
+
+vi.mock('@/stores/cart', () => ({ useCartStore: vi.fn(() => mockCartStore) }))
+vi.mock('@/stores/wishlist', () => ({ useWishlistStore: vi.fn(() => mockWishlistStore) }))
+vi.mock('@/stores/search', () => ({ useSearchStore: vi.fn(() => mockSearchStore) }))
 
 describe('Auth Store', () => {
   beforeEach(() => {
@@ -77,5 +87,10 @@ describe('Auth Store', () => {
     expect(store.user).toBe(null)
     expect(Cookies.remove).toHaveBeenCalledWith('ennesimo_auth_token')
     expect(api.setToken).toHaveBeenCalledWith(null)
+
+    // Verify other stores are cleared
+    expect(mockCartStore.clearCart).toHaveBeenCalled()
+    expect(mockWishlistStore.clearWishlist).toHaveBeenCalled()
+    expect(mockSearchStore.clearSearch).toHaveBeenCalled()
   })
 })
