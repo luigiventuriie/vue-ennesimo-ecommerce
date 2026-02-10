@@ -1,14 +1,48 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import type { Product } from '@/types';
 import { productService } from '@/services/productService';
 import { formatCategory } from '@/utils/formatters';
+import { useCartStore } from '@/stores/cart';
+import { useAuthStore } from '@/stores/auth';
 
 const route = useRoute();
 const product = ref<Product | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
+const cartStore = useCartStore();
+const authStore = useAuthStore();
+const isAdding = ref(false);
+const showRemovedFeedback = ref(false);
+
+const cartItem = computed(() => 
+  product.value ? cartStore.items.find(item => item.id === product.value!.id) : null
+);
+
+const handleUpdateQuantity = (quantity: number) => {
+  if (product.value) {
+    if (quantity === 0 && cartItem.value?.quantity === 1) {
+      showRemovedFeedback.value = true;
+      setTimeout(() => {
+        showRemovedFeedback.value = false;
+      }, 2000);
+    }
+    cartStore.updateQuantity(product.value.id, quantity);
+  }
+};
+
+const handleAddToCart = () => {
+  if (product.value) {
+    isAdding.value = true;
+    cartStore.addItem(product.value);
+    
+    // Short delay for the spinner
+    setTimeout(() => {
+      isAdding.value = false;
+    }, 500);
+  }
+};
 
 const fetchProduct = async () => {
   const idParam = route.params.id;
@@ -33,7 +67,6 @@ const fetchProduct = async () => {
 };
 
 // Re-fetch when ID changes (e.g., navigating between products)
-import { watch } from 'vue';
 watch(() => route.params.id, () => {
   fetchProduct();
 });
@@ -96,9 +129,35 @@ onMounted(() => {
           </div>
 
           <div class="actions-box">
-            <button class="add-to-cart-btn">
-              Add to Cart
-            </button>
+            <template v-if="authStore.isAuthenticated">
+              <!-- Quantity Controls if in cart -->
+              <div v-if="cartItem" class="quantity-selector">
+                <button 
+                  @click="handleUpdateQuantity(cartItem.quantity - 1)" 
+                  class="qty-btn"
+                  aria-label="Decrease quantity"
+                >−</button>
+                <span class="qty-value">{{ cartItem.quantity }} in cart</span>
+                <button 
+                  @click="handleUpdateQuantity(cartItem.quantity + 1)" 
+                  class="qty-btn"
+                  aria-label="Increase quantity"
+                >+</button>
+              </div>
+
+              <!-- Add to Cart Button if not in cart -->
+              <button 
+                v-else
+                class="add-to-cart-btn" 
+                @click="handleAddToCart"
+                :disabled="isAdding"
+              >
+                <span v-if="isAdding" class="spinner-tiny"></span>
+                <span v-else-if="showRemovedFeedback">Removed from cart</span>
+                <span v-else>Add to Cart</span>
+              </button>
+            </template>
+
             <button class="wishlist-btn" title="Add to Wishlist">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
             </button>
@@ -253,8 +312,52 @@ onMounted(() => {
 
 .actions-box {
   display: flex;
+  flex-direction: column;
   gap: 1rem;
   margin-top: 1rem;
+  
+  @media (min-width: 640px) {
+    flex-direction: row;
+  }
+}
+
+.quantity-selector {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: var(--bg-card);
+  border: 2px solid var(--color-primary-light);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-lg);
+  flex: 1;
+  justify-content: space-between;
+
+  .qty-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-body);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      background-color: var(--color-primary-light);
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+  }
+
+  .qty-value {
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+  }
 }
 
 .add-to-cart-btn {
@@ -312,5 +415,14 @@ onMounted(() => {
   &:hover {
     background-color: var(--color-primary-hover);
   }
+}
+
+.spinner-tiny {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
 }
 </style>
