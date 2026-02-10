@@ -6,6 +6,7 @@ import { productService } from '@/services/productService';
 import { formatCategory } from '@/utils/formatters';
 import { useCartStore } from '@/stores/cart';
 import { useAuthStore } from '@/stores/auth';
+import { useWishlistStore } from '@/stores/wishlist';
 
 const route = useRoute();
 const product = ref<Product | null>(null);
@@ -13,12 +14,19 @@ const isLoading = ref(true);
 const error = ref<string | null>(null);
 const cartStore = useCartStore();
 const authStore = useAuthStore();
+const wishlistStore = useWishlistStore();
 const isAdding = ref(false);
 const showRemovedFeedback = ref(false);
 
 const cartItem = computed(() => 
   product.value ? cartStore.items.find(item => item.id === product.value!.id) : null
 );
+
+const handleToggleWishlist = () => {
+  if (authStore.isAuthenticated && product.value) {
+    wishlistStore.toggleWishlist(product.value);
+  }
+};
 
 const handleUpdateQuantity = (quantity: number) => {
   if (product.value) {
@@ -136,7 +144,7 @@ onMounted(() => {
                   @click="handleUpdateQuantity(cartItem.quantity - 1)" 
                   class="qty-btn"
                   aria-label="Decrease quantity"
-                >−</button>
+                >-</button>
                 <span class="qty-value">{{ cartItem.quantity }} in cart</span>
                 <button 
                   @click="handleUpdateQuantity(cartItem.quantity + 1)" 
@@ -156,11 +164,19 @@ onMounted(() => {
                 <span v-else-if="showRemovedFeedback">Removed from cart</span>
                 <span v-else>Add to Cart</span>
               </button>
-            </template>
 
-            <button class="wishlist-btn" title="Add to Wishlist">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-            </button>
+              <!-- Wishlist Button -->
+              <button 
+                class="wishlist-btn" 
+                :class="{ active: product && wishlistStore.isInWishlist(product.id) }"
+                @click="handleToggleWishlist"
+                :title="product && wishlistStore.isInWishlist(product.id) ? 'Remove from wishlist' : 'Add to wishlist'"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" :fill="product && wishlistStore.isInWishlist(product.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+              </button>
+            </template>
           </div>
         </div>
       </div>
@@ -400,6 +416,12 @@ onMounted(() => {
     color: #ef4444; // Red-500
     border-color: #fecaca; // Red-200
     background-color: #fef2f2; // Red-50
+  }
+
+  &.active {
+    color: #ef4444;
+    border-color: #fecaca;
+    background-color: #fef2f2;
   }
 }
 

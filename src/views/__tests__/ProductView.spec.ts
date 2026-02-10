@@ -236,4 +236,60 @@ describe('ProductView', () => {
     await flushPromises();
     expect(wrapper.find('.add-to-cart-btn').text()).toBe('Removed from cart');
   });
+
+  it('shows correct wishlist button title based on state', async () => {
+    (productService.getProductById as any).mockResolvedValue(mockProduct);
+    
+    // Case 1: Not in wishlist
+    const wrapper = mount(ProductView, {
+      global: {
+        plugins: [router, createTestingPinia({ 
+          createSpy: vi.fn,
+          stubActions: false,
+          initialState: { 
+            auth: { token: 'fake-token' },
+            wishlist: { items: [] }
+          }
+        })]
+      }
+    });
+
+    await flushPromises();
+    expect(wrapper.find('.wishlist-btn').attributes('title')).toBe('Add to wishlist');
+
+    // Case 2: In wishlist
+    const wrapperIn = mount(ProductView, {
+      global: {
+        plugins: [router, createTestingPinia({ 
+          createSpy: vi.fn,
+          stubActions: false,
+          initialState: { 
+            auth: { token: 'fake-token' },
+            wishlist: { items: [mockProduct] }
+          }
+        })]
+      }
+    });
+
+    await flushPromises();
+    expect(wrapperIn.find('.wishlist-btn').attributes('title')).toBe('Remove from wishlist');
+  });
+
+  it('hides wishlist button when unauthenticated', async () => {
+    (productService.getProductById as any).mockResolvedValue(mockProduct);
+
+    const wrapper = mount(ProductView, {
+      global: {
+        plugins: [router, createTestingPinia({ 
+          createSpy: vi.fn,
+          initialState: { 
+            auth: { token: null }
+          }
+        })]
+      }
+    });
+
+    await flushPromises();
+    expect(wrapper.find('.wishlist-btn').exists()).toBe(false);
+  });
 });

@@ -5,12 +5,14 @@ import ThemeToggle from '@/components/ThemeToggle.vue'
 import LoginModal from '@/components/LoginModal.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
+import { useWishlistStore } from '@/stores/wishlist'
 import { useRouter, useRoute } from 'vue-router'
 import { formatCategory } from '@/utils/formatters'
 import logo from '@/assets/ennesimo_logo.png'
 
 const authStore = useAuthStore()
 const cartStore = useCartStore()
+const wishlistStore = useWishlistStore()
 const router = useRouter()
 const route = useRoute()
 const isLoginModalOpen = ref(false)
@@ -25,6 +27,14 @@ const handleLogout = () => {
 const handleCartClick = () => {
   if (authStore.isAuthenticated) {
     router.push('/cart')
+  } else {
+    isLoginModalOpen.value = true
+  }
+}
+
+const handleWishlistClick = () => {
+  if (authStore.isAuthenticated) {
+    router.push('/wishlist')
   } else {
     isLoginModalOpen.value = true
   }
@@ -75,6 +85,21 @@ onMounted(() => {
       <div class="actions">
         <!-- Theme Toggle -->
         <ThemeToggle />
+
+        <!-- Wishlist Icon -->
+        <button 
+          v-if="authStore.isAuthenticated"
+          class="icon-btn wishlist-btn" 
+          @click="handleWishlistClick"
+          aria-label="View wishlist"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+          <span v-if="wishlistStore.totalItems > 0" class="cart-badge">
+            {{ wishlistStore.totalItems }}
+          </span>
+        </button>
 
         <!-- Cart Icon -->
         <button 
@@ -262,7 +287,7 @@ onMounted(() => {
   }
 }
 
-.cart-btn {
+.cart-btn, .wishlist-btn {
   position: relative;
 }
 

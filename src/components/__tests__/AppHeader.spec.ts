@@ -58,7 +58,8 @@ describe('AppHeader', () => {
             createSpy: vi.fn,
             initialState: {
               auth: { isAuthenticated: false, user: null },
-              cart: { items: [] }
+              cart: { items: [] },
+              wishlist: { items: [] }
             }
           })
         ],
@@ -88,7 +89,8 @@ describe('AppHeader', () => {
             createSpy: vi.fn,
             initialState: {
               auth: { isAuthenticated: false, user: null },
-              cart: { items: [] }
+              cart: { items: [] },
+              wishlist: { items: [] }
             }
           })
         ],
@@ -116,7 +118,8 @@ describe('AppHeader', () => {
                 token: 'fake-token',
                 user: { name: { firstname: 'John' } } 
               },
-              cart: { items: [] }
+              cart: { items: [] },
+              wishlist: { items: [] }
             }
           })
         ],
@@ -141,7 +144,8 @@ describe('AppHeader', () => {
             createSpy: vi.fn,
             initialState: {
               auth: { token: 'fake-token' },
-              cart: { items: [{ id: 1, quantity: 3 }] }
+              cart: { items: [{ id: 1, quantity: 3 }] },
+              wishlist: { items: [] }
             }
           })
         ],
@@ -169,7 +173,8 @@ describe('AppHeader', () => {
             createSpy: vi.fn,
             initialState: {
               auth: { token: 'fake-token', user: { name: { firstname: 'John' } } },
-              cart: { items: [] }
+              cart: { items: [] },
+              wishlist: { items: [] }
             }
           })
         ],
@@ -182,5 +187,32 @@ describe('AppHeader', () => {
     await wrapper.find('.logout-btn').trigger('click')
     
     expect(pushSpy).toHaveBeenCalledWith('/')
+  })
+
+  it('renders wishlist badge with correct count', () => {
+    ;(productService.getCategories as any).mockResolvedValue([])
+    const wrapper = mount(AppHeader, {
+      global: {
+        plugins: [
+          router,
+          createTestingPinia({
+            createSpy: vi.fn,
+            initialState: {
+              auth: { token: 'fake-token' },
+              cart: { items: [] },
+              wishlist: { items: [{ id: 1 }] }
+            }
+          })
+        ],
+        stubs: {
+          ThemeToggle: true,
+          LoginModal: true
+        },
+      },
+    })
+
+    expect(wrapper.find('.wishlist-btn').exists()).toBe(true)
+    // The wishlist heart icon should have a badge with '1'
+    expect(wrapper.find('.wishlist-btn .cart-badge').text()).toBe('1')
   })
 })

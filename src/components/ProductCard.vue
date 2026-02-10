@@ -1,11 +1,21 @@
 <script setup lang="ts">
-import type { Product } from '@/types';
-import { formatCategory } from '@/utils/formatters';
+import type { Product } from '@/types'
+import { formatCategory } from '@/utils/formatters'
+import { useWishlistStore } from '@/stores/wishlist'
+import { useAuthStore } from '@/stores/auth'
 
-defineProps<{
-  product: Product;
-}>();
+const wishlistStore = useWishlistStore()
+const authStore = useAuthStore()
 
+const props = defineProps<{
+  product: Product
+}>()
+
+const handleToggleWishlist = () => {
+  if (authStore.isAuthenticated) {
+    wishlistStore.toggleWishlist(props.product)
+  }
+}
 </script>
 
 <template>
@@ -13,6 +23,34 @@ defineProps<{
     <div class="product-image-wrapper">
       <img :src="product.image" :alt="product.title" class="product-image" loading="lazy" />
       <span class="product-category">{{ formatCategory(product.category) }}</span>
+
+      <!-- Wishlist Toggle -->
+      <button
+        v-if="authStore.isAuthenticated"
+        @click.prevent.stop="handleToggleWishlist"
+        class="wishlist-toggle"
+        :class="{ active: wishlistStore.isInWishlist(product.id) }"
+        :aria-label="
+          wishlistStore.isInWishlist(product.id) ? 'Remove from wishlist' : 'Add to wishlist'
+        "
+        :title="wishlistStore.isInWishlist(product.id) ? 'Remove from wishlist' : 'Add to wishlist'"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          :fill="wishlistStore.isInWishlist(product.id) ? 'currentColor' : 'none'"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+          ></path>
+        </svg>
+      </button>
     </div>
     <div class="product-info">
       <h3 class="product-title">{{ product.title }}</h3>
@@ -35,14 +73,19 @@ defineProps<{
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
   height: 100%;
   text-decoration: none;
   color: inherit;
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow:
+      0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05);
     border-color: var(--color-primary-light);
 
     .product-title {
@@ -85,6 +128,38 @@ defineProps<{
   border-radius: var(--radius-sm);
   text-transform: uppercase;
   letter-spacing: 0.025em;
+  z-index: 1;
+}
+
+.wishlist-toggle {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 34px;
+  height: 34px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-secondary);
+  z-index: 10;
+  box-shadow: var(--shadow-sm);
+
+  &:hover {
+    transform: scale(1.1);
+    color: #ef4444;
+    border-color: #fecaca;
+  }
+
+  &.active {
+    color: #ef4444;
+    background-color: #fef2f2;
+    border-color: #fecaca;
+  }
 }
 
 .product-info {
