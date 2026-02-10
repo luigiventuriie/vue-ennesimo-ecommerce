@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
+import { createTestingPinia } from '@pinia/testing'
 import HomeView from '../HomeView.vue'
 import { productService } from '@/services/productService'
 
@@ -53,7 +54,7 @@ describe('HomeView', () => {
 
     const wrapper = mount(HomeView, {
       global: {
-        plugins: [router],
+        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
       },
     })
 
@@ -72,7 +73,7 @@ describe('HomeView', () => {
 
     const wrapper = mount(HomeView, {
       global: {
-        plugins: [router],
+        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
       },
     })
 
@@ -94,7 +95,7 @@ describe('HomeView', () => {
 
     const wrapper = mount(HomeView, {
       global: {
-        plugins: [router],
+        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
       },
     })
 
@@ -112,7 +113,7 @@ describe('HomeView', () => {
 
     const wrapper = mount(HomeView, {
       global: {
-        plugins: [router],
+        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
       },
     })
 

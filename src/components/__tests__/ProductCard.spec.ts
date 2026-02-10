@@ -1,6 +1,8 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { mount, RouterLinkStub } from '@vue/test-utils'
+import { createTestingPinia } from '@pinia/testing'
 import ProductCard from '../ProductCard.vue'
+import { useWishlistStore } from '@/stores/wishlist'
 import type { Product } from '@/types'
 
 const mockProduct: Product = {
@@ -23,6 +25,7 @@ describe('ProductCard', () => {
         product: mockProduct,
       },
       global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
           RouterLink: RouterLinkStub,
         },
@@ -47,6 +50,7 @@ describe('ProductCard', () => {
         product: mockProduct,
       },
       global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
           RouterLink: RouterLinkStub,
         },
@@ -56,4 +60,91 @@ describe('ProductCard', () => {
     const link = wrapper.getComponent(RouterLinkStub)
     expect(link.props().to).toBe('/product/1')
   })
+
+  it('shows wishlist toggle when authenticated', () => {
+    const wrapper = mount(ProductCard, {
+      props: { product: mockProduct },
+      global: {
+        plugins: [createTestingPinia({ 
+          createSpy: vi.fn,
+          initialState: { auth: { token: 'fake-token' } }
+        })],
+        stubs: { RouterLink: RouterLinkStub }
+      }
+    });
+
+    expect(wrapper.find('.wishlist-toggle').exists()).toBe(true);
+  });
+
+  it('hides wishlist toggle when unauthenticated', () => {
+    const wrapper = mount(ProductCard, {
+      props: { product: mockProduct },
+      global: {
+        plugins: [createTestingPinia({ 
+          createSpy: vi.fn,
+          initialState: { auth: { token: null } }
+        })],
+        stubs: { RouterLink: RouterLinkStub }
+      }
+    });
+
+    expect(wrapper.find('.wishlist-toggle').exists()).toBe(false);
+  });
+
+  it('calls wishlistStore.toggleWishlist when toggle clicked', async () => {
+    const wrapper = mount(ProductCard, {
+      props: { product: mockProduct },
+      global: {
+        plugins: [createTestingPinia({ 
+          createSpy: vi.fn,
+          initialState: { auth: { token: 'fake-token' } }
+        })],
+        stubs: { RouterLink: RouterLinkStub }
+      }
+    });
+
+    const wishlistStore = useWishlistStore();
+    await wrapper.find('.wishlist-toggle').trigger('click');
+    expect(wishlistStore.toggleWishlist).toHaveBeenCalledWith(mockProduct);
+  });
+
+  it('shows correct title and aria-label based on wishlist state', async () => {
+    // Case 1: Not in wishlist
+    const wrapper = mount(ProductCard, {
+      props: { product: mockProduct },
+      global: {
+        plugins: [createTestingPinia({ 
+          createSpy: vi.fn,
+          stubActions: false,
+          initialState: { 
+            auth: { token: 'fake-token' },
+            wishlist: { items: [] }
+          }
+        })],
+        stubs: { RouterLink: RouterLinkStub }
+      }
+    });
+    const btn = wrapper.find('.wishlist-toggle');
+    expect(btn.attributes('title')).toBe('Add to wishlist');
+    expect(btn.attributes('aria-label')).toBe('Add to wishlist');
+
+    // Case 2: In wishlist
+    const wrapperIn = mount(ProductCard, {
+      props: { product: mockProduct },
+      global: {
+        plugins: [createTestingPinia({ 
+          createSpy: vi.fn,
+          stubActions: false,
+          initialState: { 
+            auth: { token: 'fake-token' },
+            wishlist: { items: [mockProduct] }
+          }
+        })],
+        stubs: { RouterLink: RouterLinkStub }
+      }
+    });
+    const btnIn = wrapperIn.find('.wishlist-toggle');
+    expect(btnIn.attributes('title')).toBe('Remove from wishlist');
+    expect(btnIn.attributes('aria-label')).toBe('Remove from wishlist');
+  });
 })
