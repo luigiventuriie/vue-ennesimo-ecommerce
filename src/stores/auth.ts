@@ -4,6 +4,9 @@ import Cookies from 'js-cookie';
 import { authService } from '@/services/authService';
 import { api } from '@/services/api';
 import type { LoginCredentials, User } from '@/types';
+import { useCartStore } from '@/stores/cart';
+import { useWishlistStore } from '@/stores/wishlist';
+import { useSearchStore } from '@/stores/search';
 
 const TOKEN_KEY = 'ennesimo_auth_token';
 const USER_KEY = 'ennesimo_user_data';
@@ -41,17 +44,18 @@ export const useAuthStore = defineStore('auth', () => {
       Cookies.set(TOKEN_KEY, response.token, { expires: 7, secure: true, sameSite: 'strict' });
       api.setToken(response.token);
 
-      // In a real app, we'd fetch the user profile here.
-      // FakeStoreAPI doesn't return user info on login, only token.
-      // We'll mock a user for now or use a hardcoded demo user if needed.
-      const mockUser: User = {
-        id: 1,
-        username: credentials.username,
-        email: 'john@gmail.com',
-        name: { firstname: 'John', lastname: 'Doe' }
-      };
-      user.value = mockUser;
-      Cookies.set(USER_KEY, JSON.stringify(mockUser), { expires: 7, secure: true, sameSite: 'strict' });
+      // Fetch real user profile. 
+      // Since FakeStoreAPI doesn't have a 'me' endpoint, we fetch all users and find the match.
+      const users = await authService.getAllUsers();
+      const authenticatedUser = users.find(u => u.username === credentials.username);
+
+      if (authenticatedUser) {
+        user.value = authenticatedUser;
+        Cookies.set(USER_KEY, JSON.stringify(authenticatedUser), { expires: 7, secure: true, sameSite: 'strict' });
+      } else {
+        // Fallback for safety, though login should have failed if user didn't exist
+        console.warn('Authenticated user profile not found in users list');
+      }
       
       return true;
     } catch (err: any) {
@@ -68,6 +72,11 @@ export const useAuthStore = defineStore('auth', () => {
     Cookies.remove(TOKEN_KEY);
     Cookies.remove(USER_KEY);
     api.setToken(null);
+
+    // Reset other stores
+    useCartStore().clearCart();
+    useWishlistStore().clearWishlist();
+    useSearchStore().clearSearch();
   }
 
   return {
