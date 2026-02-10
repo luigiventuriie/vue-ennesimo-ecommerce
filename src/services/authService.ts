@@ -1,5 +1,5 @@
 import { api } from './api';
-import type { LoginCredentials, LoginResponse } from '@/types';
+import type { LoginCredentials, LoginResponse, User } from '@/types';
 
 export const authService = {
   /**
@@ -10,10 +10,16 @@ export const authService = {
   },
 
   /**
-   * Mock user data fetching (FakeStoreAPI doesn't have a direct 'me' endpoint with tokens)
-   * In a real app, we would fetch the user profile using the token.
+   * Fetches all users (used to find profile on login as FakeStoreAPI lacks 'me' endpoint)
    */
-  async getUserProfile(id: number) {
-    return api.get(`/users/${id}`);
+  async getAllUsers(): Promise<User[]> {
+    return api.get<User[]>('/users');
+  },
+
+  /**
+   * Fetches a specific user profile by ID
+   */
+  async getUserProfile(id: number): Promise<User> {
+    return api.get<User>(`/users/${id}`);
   }
 };

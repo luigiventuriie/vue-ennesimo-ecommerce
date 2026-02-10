@@ -31,15 +31,28 @@ describe('Auth Store', () => {
     const store = useAuthStore()
     const mockCredentials = { username: 'testuser', password: 'password' }
     const mockResponse = { token: 'jwt-token' }
+    const mockUser = {
+      id: 1,
+      username: 'testuser',
+      email: 'test@example.com',
+      name: { firstname: 'Test', lastname: 'User' },
+    }
 
     ;(authService.login as any).mockResolvedValue(mockResponse)
+    ;(authService.getAllUsers as any).mockResolvedValue([mockUser])
 
     const success = await store.login(mockCredentials)
 
     expect(success).toBe(true)
     expect(store.token).toBe('jwt-token')
+    expect(store.user).toEqual(mockUser)
     expect(store.isAuthenticated).toBe(true)
     expect(Cookies.set).toHaveBeenCalledWith('ennesimo_auth_token', 'jwt-token', expect.any(Object))
+    expect(Cookies.set).toHaveBeenCalledWith(
+      'ennesimo_user_data',
+      JSON.stringify(mockUser),
+      expect.any(Object),
+    )
     expect(api.setToken).toHaveBeenCalledWith('jwt-token')
   })
 
