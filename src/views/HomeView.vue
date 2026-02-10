@@ -14,7 +14,7 @@ const error = ref<string | null>(null)
 const searchStore = useSearchStore()
 
 // Sorting & Pagination State
-const sortOption = ref('default')
+const sortOption = ref('alphabetical-asc')
 const currentPage = ref(1)
 const itemsPerPage = ref(8)
 
@@ -49,6 +49,10 @@ const filteredProducts = computed(() => {
 const sortedProducts = computed(() => {
   const list = [...filteredProducts.value]
   switch (sortOption.value) {
+    case 'alphabetical-asc':
+      return list.sort((a, b) => a.title.localeCompare(b.title))
+    case 'alphabetical-desc':
+      return list.sort((a, b) => b.title.localeCompare(a.title))
     case 'price-low':
       return list.sort((a, b) => a.price - b.price)
     case 'price-high':
@@ -113,7 +117,8 @@ const clearFilter = () => {
         <div class="sort-wrapper">
           <label for="sort" class="sort-label">Sort by:</label>
           <select id="sort" v-model="sortOption" class="sort-select">
-            <option value="default">Newest Labels</option>
+            <option value="alphabetical-asc">Alphabetical: A-Z</option>
+            <option value="alphabetical-desc">Alphabetical: Z-A</option>
             <option value="price-low">Price: Low to High</option>
             <option value="price-high">Price: High to Low</option>
             <option value="rating">Highest Rated</option>

@@ -157,7 +157,7 @@ describe('HomeView', () => {
 
     await flushPromises();
     
-    // Set sort option to price-low
+    // Set sort option to price-low (default is now alphabetical-asc)
     await wrapper.find('#sort').setValue('price-low');
     
     const cards = wrapper.findAllComponents(ProductCard);
