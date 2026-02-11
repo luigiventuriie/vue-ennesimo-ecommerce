@@ -6,11 +6,18 @@ import CartButton from '@/components/CartButton.vue'
 import AuthSection from '@/components/AuthSection.vue'
 import CategoryNav from '@/components/CategoryNav.vue'
 import AppLogo from '@/components/AppLogo.vue'
+import MobileMenu from '@/components/MobileMenu.vue'
+import HamburgerButton from '@/components/HamburgerButton.vue'
+import { ref } from 'vue'
+
+const isMobileMenuOpen = ref(false)
 </script>
 
 <template>
   <header class="app-header">
     <div class="container">
+      <HamburgerButton @click="isMobileMenuOpen = true" />
+
       <AppLogo />
 
       <SearchBar />
@@ -27,6 +34,8 @@ import AppLogo from '@/components/AppLogo.vue'
         <AuthSection />
       </div>
     </div>
+
+    <MobileMenu :is-open="isMobileMenuOpen" @close="isMobileMenuOpen = false" />
   </header>
 </template>
 
@@ -59,7 +68,7 @@ import AppLogo from '@/components/AppLogo.vue'
   gap: 0.75rem;
 
   @media (min-width: 768px) {
-    gap: 1.5rem;
+    gap: 0.5rem;
   }
 }
 </style>

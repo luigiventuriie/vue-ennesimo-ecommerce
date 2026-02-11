@@ -3,6 +3,14 @@ import { ref, onMounted } from 'vue'
 import { productService } from '@/services/productService'
 import { formatCategory } from '@/utils/formatters'
 
+interface Props {
+  mode?: 'desktop' | 'mobile'
+}
+
+withDefaults(defineProps<Props>(), {
+  mode: 'desktop',
+})
+
 const categories = ref<string[]>([])
 const isLoading = ref(false)
 
@@ -23,12 +31,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <nav class="desktop-nav">
+  <nav :class="['category-nav', mode]">
     <router-link
       v-for="category in categories"
       :key="category"
       :to="{ path: '/', query: { category } }"
       class="nav-link"
+      @click="$emit('item-click')"
     >
       {{ formatCategory(category) }}
     </router-link>
@@ -36,12 +45,34 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
-.desktop-nav {
-  display: none;
-  gap: 1.5rem;
+.category-nav {
+  display: flex;
+  gap: 1rem;
 
-  @media (min-width: 768px) {
+  &.desktop {
+    display: none;
+
+    @media (min-width: 768px) {
+      display: flex;
+    }
+  }
+
+  &.mobile {
     display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+
+    .nav-link {
+      display: block;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 1rem;
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
   }
 
   .nav-link {
