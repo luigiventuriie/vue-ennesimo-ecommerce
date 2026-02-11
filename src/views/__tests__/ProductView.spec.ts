@@ -232,9 +232,12 @@ describe('ProductView', () => {
     const cartStore = useCartStore();
     cartStore.items = [];
     
-    // It should now show "Removed from cart" in the add to cart button (which reappears)
+    // It should now show "Add to Cart" again
     await flushPromises();
-    expect(wrapper.find('[data-test="add-to-cart-btn"]').text()).toBe('Removed from cart');
+    expect(wrapper.find('[data-test="add-to-cart-btn"]').text()).toBe('Add to Cart');
+    
+    // Check if toast text exists in DOM
+    expect(wrapper.text()).toContain('Item removed from cart');
   });
 
   it('shows correct wishlist button title based on state', async () => {
