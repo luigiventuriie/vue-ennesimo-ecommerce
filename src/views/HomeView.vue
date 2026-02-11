@@ -6,6 +6,8 @@ import { productService } from '@/services/productService'
 import ProductCard from '@/components/ProductCard.vue'
 import { useSearchStore } from '@/stores/search'
 import { computed } from 'vue'
+import BaseButton from '@/components/BaseButton.vue'
+import BaseSpinner from '@/components/BaseSpinner.vue'
 
 const route = useRoute()
 const products = ref<Product[]>([])
@@ -129,7 +131,7 @@ const clearFilter = () => {
 
     <!-- Loading State -->
     <div v-if="isLoading" class="loading-state">
-      <div class="spinner"></div>
+      <BaseSpinner size="lg" />
       <p>Fetching amazing products...</p>
     </div>
 
@@ -137,7 +139,7 @@ const clearFilter = () => {
     <div v-else-if="error" class="error-state">
       <div class="error-icon">⚠️</div>
       <p>{{ error }}</p>
-      <button @click="fetchProducts" class="retry-btn">Try Again</button>
+      <BaseButton @click="fetchProducts">Try Again</BaseButton>
     </div>
 
     <!-- Empty State -->
@@ -145,7 +147,7 @@ const clearFilter = () => {
       <div class="empty-icon">🔍</div>
       <p v-if="searchStore.searchQuery">No products match your search "{{ searchStore.searchQuery }}".</p>
       <p v-else>No products found in this category.</p>
-      <button @click="searchStore.clearSearch(); fetchProducts()" class="clear-btn">Clear All Filters</button>
+      <BaseButton @click="searchStore.clearSearch(); fetchProducts()">Clear All Filters</BaseButton>
     </div>
 
     <!-- Product Grid & Pagination -->
@@ -154,34 +156,37 @@ const clearFilter = () => {
         <ProductCard v-for="product in paginatedProducts" :key="product.id" :product="product" />
       </div>
 
-      <!-- Pagination Controls -->
-      <div v-if="totalPages > 1" class="pagination">
-        <button 
-          @click="handlePageChange(currentPage - 1)" 
+      <div v-if="totalPages > 1" class="pagination" data-test="pagination">
+        <BaseButton
+          variant="outline"
+          @click="handlePageChange(currentPage - 1)"
           :disabled="currentPage === 1"
           class="page-btn prev"
         >
           &larr; Previous
-        </button>
+        </BaseButton>
         
         <div class="page-numbers">
-          <button 
-            v-for="page in totalPages" 
+          <BaseButton
+            v-for="page in totalPages"
             :key="page"
             @click="handlePageChange(page)"
-            :class="['page-num', { active: currentPage === page }]"
+            :variant="currentPage === page ? 'primary' : 'outline'"
+            class="page-num-btn"
+            data-test="page-num-btn"
           >
             {{ page }}
-          </button>
+          </BaseButton>
         </div>
 
-        <button 
-          @click="handlePageChange(currentPage + 1)" 
+        <BaseButton
+          variant="outline"
+          @click="handlePageChange(currentPage + 1)"
           :disabled="currentPage === totalPages"
           class="page-btn next"
         >
           Next &rarr;
-        </button>
+        </BaseButton>
       </div>
     </template>
   </div>
@@ -276,60 +281,17 @@ const clearFilter = () => {
   gap: 1.5rem;
 }
 
-.page-btn {
-  padding: 0.6rem 1.25rem;
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  font-weight: 600;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s;
 
-  &:hover:not(:disabled) {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-    background-color: var(--color-primary-light);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
 
 .page-numbers {
   display: flex;
   gap: 0.5rem;
 }
 
-.page-num {
-  width: 38px;
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  font-weight: 600;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover:not(.active) {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-  }
-
-  &.active {
-    background-color: var(--color-primary);
-    border-color: var(--color-primary);
-    color: white;
-    cursor: default;
-  }
+.page-num-btn {
+  width: 40px;
+  min-width: 40px;
+  padding: 0;
 }
 
 .product-grid {
@@ -365,45 +327,7 @@ const clearFilter = () => {
   border: 1px solid var(--border-color);
 }
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--color-primary-light);
-  border-top-color: var(--color-primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .error-icon {
   font-size: 3rem;
-}
-
-.retry-btn,
-.clear-btn {
-  padding: 0.75rem 1.5rem;
-  background-color: var(--color-primary);
-  color: white;
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background-color: var(--color-primary-hover);
-  }
-}
-
-.clear-btn {
-  display: inline-block;
-  color: white;
-
-  &:hover {
-    color: white;
-  }
 }
 </style>

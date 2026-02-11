@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import BaseButton from './BaseButton.vue'
 
 const props = defineProps<{
   isOpen: boolean
@@ -50,11 +51,17 @@ const handleLogin = async () => {
   <transition name="modal-fade">
     <div v-if="isOpen" class="modal-overlay" @click.self="emit('close')">
       <div class="modal-content" role="dialog" aria-modal="true">
-        <button class="close-btn" @click="emit('close')" aria-label="Close modal">
+        <BaseButton
+          variant="ghost"
+          size="sm"
+          class="close-btn"
+          @click="emit('close')"
+          aria-label="Close modal"
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -65,7 +72,7 @@ const handleLogin = async () => {
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
-        </button>
+        </BaseButton>
 
         <div class="modal-header">
           <h2 class="modal-title">Welcome Back</h2>
@@ -104,10 +111,14 @@ const handleLogin = async () => {
             <p class="hint">Try: <span>m38rmF$</span></p>
           </div>
 
-          <button type="submit" class="submit-btn" :disabled="isSubmitting">
-            <span v-if="!isSubmitting">Login</span>
-            <span v-else class="spinner-small"></span>
-          </button>
+          <BaseButton
+            type="submit"
+            class="submit-btn"
+            :isLoading="isSubmitting"
+            block
+          >
+            Login
+          </BaseButton>
         </form>
 
         <div class="modal-footer">
@@ -149,18 +160,10 @@ const handleLogin = async () => {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 0.5rem;
+  width: 40px;
+  height: 40px;
+  padding: 0;
   border-radius: 50%;
-  transition: all 0.2s;
-
-  &:hover {
-    background-color: var(--bg-body);
-    color: var(--color-primary);
-  }
 }
 
 .modal-header {
@@ -240,37 +243,7 @@ const handleLogin = async () => {
   text-align: center;
 }
 
-.submit-btn {
-  background-color: var(--color-primary);
-  color: white;
-  border: none;
-  padding: 0.875rem;
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 0.5rem;
 
-  &:hover {
-    background-color: var(--color-primary-hover);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-sm);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    transform: none;
-  }
-}
 
 .modal-footer {
   margin-top: 2rem;
@@ -289,20 +262,7 @@ const handleLogin = async () => {
   }
 }
 
-.spinner-small {
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
 
 /* Transitions */
 .modal-fade-enter-active,

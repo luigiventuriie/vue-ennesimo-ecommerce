@@ -184,8 +184,8 @@ describe('HomeView', () => {
     
     // itemsPerPage is 8, so first page should have 8
     expect(wrapper.findAllComponents(ProductCard).length).toBe(8);
-    expect(wrapper.find('.pagination').exists()).toBe(true);
-    expect(wrapper.findAll('.page-num').length).toBe(2);
+    expect(wrapper.find('[data-test="pagination"]').exists()).toBe(true);
+    expect(wrapper.findAll('[data-test="page-num-btn"]').length).toBe(2);
 
     // Go to next page
     await wrapper.find('.page-btn.next').trigger('click');

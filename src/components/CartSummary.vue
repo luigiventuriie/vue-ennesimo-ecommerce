@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseButton from './BaseButton.vue'
+
 defineProps<{
   totalItems: number
   totalPrice: number
@@ -27,18 +29,18 @@ defineProps<{
         <span>${{ totalPrice.toFixed(2) }}</span>
       </div>
 
-      <button class="checkout-btn">
+      <BaseButton class="checkout-btn" variant="primary" size="lg" block>
         Proceed to Checkout
-      </button>
+      </BaseButton>
       
       <p class="shipping-info">
         Shipping and taxes calculated at checkout
       </p>
     </div>
     
-    <router-link to="/" class="back-link">
+    <BaseButton to="/" variant="ghost" block>
       ← Continue Shopping
-    </router-link>
+    </BaseButton>
   </aside>
 </template>
 
@@ -91,25 +93,7 @@ defineProps<{
   margin: 1.5rem 0;
 }
 
-.checkout-btn {
-  width: 100%;
-  background-color: var(--color-primary);
-  color: white;
-  border: none;
-  padding: 1rem;
-  border-radius: var(--radius-lg);
-  font-weight: 700;
-  font-size: 1rem;
-  margin-top: 1.5rem;
-  cursor: pointer;
-  transition: all 0.2s;
 
-  &:hover {
-    background-color: var(--color-primary-hover);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-  }
-}
 
 .shipping-info {
   font-size: 0.75rem;
@@ -118,16 +102,5 @@ defineProps<{
   margin-top: 1rem;
 }
 
-.back-link {
-  text-align: center;
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.875rem;
-  transition: color 0.2s;
 
-  &:hover {
-    color: var(--color-primary);
-  }
-}
 </style>

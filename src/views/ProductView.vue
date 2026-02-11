@@ -8,6 +8,8 @@ import { useAuthStore } from '@/stores/auth'
 import ProductWishlistButton from '@/components/ProductWishlistButton.vue'
 import CategoryTag from '@/components/CategoryTag.vue'
 import ProductRating from '@/components/ProductRating.vue'
+import BaseButton from '@/components/BaseButton.vue'
+import BaseSpinner from '@/components/BaseSpinner.vue'
 
 const route = useRoute()
 const product = ref<Product | null>(null)
@@ -84,11 +86,11 @@ onMounted(() => {
 <template>
   <div class="product-view">
     <!-- Back Navigation -->
-    <router-link to="/" class="back-link">
+    <BaseButton to="/" variant="ghost" size="sm" class="back-link">
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        width="20"
-        height="20"
+        width="18"
+        height="18"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -100,11 +102,11 @@ onMounted(() => {
         <polyline points="12 19 5 12 12 5"></polyline>
       </svg>
       Back to collection
-    </router-link>
+    </BaseButton>
 
     <!-- Loading State -->
     <div v-if="isLoading" class="loading-state">
-      <div class="spinner"></div>
+      <BaseSpinner size="lg" />
       <p>Loading product details...</p>
     </div>
 
@@ -112,7 +114,7 @@ onMounted(() => {
     <div v-else-if="error" class="error-state">
       <div class="error-icon">⚠️</div>
       <p>{{ error }}</p>
-      <button @click="fetchProduct" class="retry-btn">Try Again</button>
+      <BaseButton @click="fetchProduct">Try Again</BaseButton>
     </div>
 
     <!-- Product Content -->
@@ -145,29 +147,36 @@ onMounted(() => {
             <template v-if="authStore.isAuthenticated">
               <!-- Quantity Controls if in cart -->
               <div v-if="cartItem" class="quantity-selector">
-                <button
+                <BaseButton
+                  variant="outline"
+                  size="sm"
                   @click="handleUpdateQuantity(cartItem.quantity - 1)"
-                  class="qty-btn"
                   aria-label="Decrease quantity"
                 >
                   -
-                </button>
+                </BaseButton>
                 <span class="qty-value">{{ cartItem.quantity }} in cart</span>
-                <button
+                <BaseButton
+                  variant="outline"
+                  size="sm"
                   @click="handleUpdateQuantity(cartItem.quantity + 1)"
-                  class="qty-btn"
                   aria-label="Increase quantity"
                 >
                   +
-                </button>
+                </BaseButton>
               </div>
 
               <!-- Add to Cart Button if not in cart -->
-              <button v-else class="add-to-cart-btn" @click="handleAddToCart" :disabled="isAdding">
-                <span v-if="isAdding" class="spinner-tiny"></span>
-                <span v-else-if="showRemovedFeedback">Removed from cart</span>
+              <BaseButton
+                v-else
+                @click="handleAddToCart"
+                :isLoading="isAdding"
+                block
+                data-test="add-to-cart-btn"
+              >
+                <span v-if="showRemovedFeedback">Removed from cart</span>
                 <span v-else>Add to Cart</span>
-              </button>
+              </BaseButton>
 
               <!-- Wishlist Button -->
               <ProductWishlistButton v-if="product" :product="product" size="md" />
@@ -187,18 +196,7 @@ onMounted(() => {
 }
 
 .back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-size: 0.875rem;
   margin-bottom: 2rem;
-  transition: color 0.2s;
-
-  &:hover {
-    color: var(--color-primary);
-  }
 }
 
 .loading-state,
@@ -212,19 +210,8 @@ onMounted(() => {
   gap: 2rem;
 }
 
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid var(--color-primary-light);
-  border-top-color: var(--color-primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+.error-icon {
+  font-size: 3rem;
 }
 
 .product-grid {
@@ -317,26 +304,7 @@ onMounted(() => {
   flex: 1;
   justify-content: space-between;
 
-  .qty-btn {
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--bg-body);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
-    font-size: 1.25rem;
-    cursor: pointer;
-    transition: all 0.2s;
 
-    &:hover {
-      background-color: var(--color-primary-light);
-      border-color: var(--color-primary);
-      color: var(--color-primary);
-    }
-  }
 
   .qty-value {
     font-weight: 700;
@@ -345,49 +313,5 @@ onMounted(() => {
   }
 }
 
-.add-to-cart-btn {
-  flex: 1;
-  background-color: var(--color-primary);
-  color: white;
-  border: none;
-  padding: 1rem;
-  border-radius: var(--radius-lg);
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s;
 
-  &:hover {
-    background-color: var(--color-primary-hover);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-}
-
-.retry-btn {
-  padding: 0.75rem 1.5rem;
-  background-color: var(--color-primary);
-  color: white;
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-
-  &:hover {
-    background-color: var(--color-primary-hover);
-  }
-}
-
-.spinner-tiny {
-  width: 18px;
-  height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
 </style>
