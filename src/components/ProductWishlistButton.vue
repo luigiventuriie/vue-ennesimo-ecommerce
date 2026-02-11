@@ -21,7 +21,8 @@ const handleToggleWishlist = (product: Product) => {
 <template>
   <button
     v-if="authStore.isAuthenticated"
-    class="wishlist-btn"
+    class="product-wishlist-btn"
+    data-test="product-wishlist-btn"
     :class="[size || 'md', { active: wishlistStore.isInWishlist(product.id) }]"
     @click.prevent.stop="handleToggleWishlist(product)"
     :title="wishlistStore.isInWishlist(product.id) ? 'Remove from wishlist' : 'Add to wishlist'"
@@ -48,7 +49,7 @@ const handleToggleWishlist = (product: Product) => {
 </template>
 
 <style scoped lang="scss">
-.wishlist-btn {
+.product-wishlist-btn {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
   color: var(--text-secondary);

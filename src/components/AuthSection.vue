@@ -40,9 +40,12 @@ const handleLogout = () => {
 
     <template v-else>
       <div class="user-menu">
-        <span class="user-greeting">Hi, {{ authStore.user?.name.firstname }}</span>
+        <span class="user-greeting" data-test="user-greeting"
+          >Hi, {{ authStore.user?.name.firstname }}</span
+        >
         <button
           class="icon-btn logout-btn"
+          data-test="logout-btn"
           @click="handleLogout"
           title="Logout"
           aria-label="Logout"

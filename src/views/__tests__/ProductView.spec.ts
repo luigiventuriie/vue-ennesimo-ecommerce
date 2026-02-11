@@ -1,18 +1,18 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { mount, flushPromises } from '@vue/test-utils';
-import { createRouter, createWebHistory } from 'vue-router';
-import { createTestingPinia } from '@pinia/testing';
-import { nextTick } from 'vue';
-import ProductView from '../ProductView.vue';
-import { productService } from '@/services/productService';
-import { useCartStore } from '@/stores/cart';
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { mount, flushPromises } from '@vue/test-utils'
+import { createRouter, createWebHistory } from 'vue-router'
+import { createTestingPinia } from '@pinia/testing'
+import { nextTick } from 'vue'
+import ProductView from '../ProductView.vue'
+import { productService } from '@/services/productService'
+import { useCartStore } from '@/stores/cart'
 
 // Mock productService
 vi.mock('@/services/productService', () => ({
   productService: {
-    getProductById: vi.fn()
-  }
-}));
+    getProductById: vi.fn(),
+  },
+}))
 
 const mockProduct = {
   id: 1,
@@ -21,278 +21,298 @@ const mockProduct = {
   description: 'A great product description.',
   category: 'electronics',
   image: 'test.jpg',
-  rating: { rate: 4.2, count: 100 }
-};
+  rating: { rate: 4.2, count: 100 },
+}
 
 describe('ProductView', () => {
-  let router: any;
+  let router: any
 
   beforeEach(async () => {
-    vi.clearAllMocks();
+    vi.clearAllMocks()
     router = createRouter({
       history: createWebHistory(),
-      routes: [{ path: '/product/:id', name: 'product', component: { template: '<div>Product</div>' } }]
-    });
-    router.push('/product/1');
-    await router.isReady();
-  });
+      routes: [
+        { path: '/product/:id', name: 'product', component: { template: '<div>Product</div>' } },
+      ],
+    })
+    router.push('/product/1')
+    await router.isReady()
+  })
 
   it('fetches and displays product details correctly', async () => {
-    (productService.getProductById as any).mockResolvedValue(mockProduct);
+    ;(productService.getProductById as any).mockResolvedValue(mockProduct)
 
     const wrapper = mount(ProductView, {
       global: {
-        plugins: [router, createTestingPinia({ createSpy: vi.fn })]
-      }
-    });
+        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
+      },
+    })
 
-    await flushPromises();
+    await flushPromises()
 
-    expect(productService.getProductById).toHaveBeenCalledWith(1);
-    expect(wrapper.get('.product-title').text()).toBe('Test Product');
-    expect(wrapper.get('.price').text()).toBe('$50.00');
-    expect(wrapper.get('.description').text()).toBe('A great product description.');
-    expect(wrapper.get('.category-tag').text()).toBe('Electronics');
-  });
+    expect(productService.getProductById).toHaveBeenCalledWith(1)
+    expect(wrapper.get('.product-title').text()).toBe('Test Product')
+    expect(wrapper.get('.price').text()).toBe('$50.00')
+    expect(wrapper.get('.description').text()).toBe('A great product description.')
+    expect(wrapper.get('.category-tag').text()).toBe('Electronics')
+  })
 
   it('shows loading state while fetching', async () => {
-    let resolvePromise: any;
+    let resolvePromise: any
     const promise = new Promise((resolve) => {
-      resolvePromise = resolve;
-    });
-    (productService.getProductById as any).mockReturnValue(promise);
+      resolvePromise = resolve
+    })
+    ;(productService.getProductById as any).mockReturnValue(promise)
 
     const wrapper = mount(ProductView, {
       global: {
-        plugins: [router, createTestingPinia({ createSpy: vi.fn })]
-      }
-    });
+        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
+      },
+    })
 
-    await nextTick();
-    expect(wrapper.find('.loading-state').exists()).toBe(true);
+    await nextTick()
+    expect(wrapper.find('.loading-state').exists()).toBe(true)
 
-    resolvePromise(mockProduct);
-    await flushPromises();
-    expect(wrapper.find('.loading-state').exists()).toBe(false);
-  });
+    resolvePromise(mockProduct)
+    await flushPromises()
+    expect(wrapper.find('.loading-state').exists()).toBe(false)
+  })
 
   it('shows error state when fetching fails', async () => {
-    (productService.getProductById as any).mockRejectedValue(new Error('Fetch failed'));
+    ;(productService.getProductById as any).mockRejectedValue(new Error('Fetch failed'))
 
     const wrapper = mount(ProductView, {
       global: {
-        plugins: [router, createTestingPinia({ createSpy: vi.fn })]
-      }
-    });
+        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
+      },
+    })
 
-    await flushPromises();
+    await flushPromises()
 
-    expect(wrapper.find('.error-state').exists()).toBe(true);
-    expect(wrapper.text()).toContain('Failed to load product details');
-  });
+    expect(wrapper.find('.error-state').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Failed to load product details')
+  })
 
   it('shows error for invalid ID', async () => {
     // Create a fresh router for this test to avoid leakage
     const testRouter = createRouter({
       history: createWebHistory(),
-      routes: [{ path: '/product/:id', component: { template: '<div></div>' } }]
-    });
-    testRouter.push('/product/abc');
-    await testRouter.isReady();
+      routes: [{ path: '/product/:id', component: { template: '<div></div>' } }],
+    })
+    testRouter.push('/product/abc')
+    await testRouter.isReady()
 
     const wrapper = mount(ProductView, {
       global: {
-        plugins: [testRouter, createTestingPinia({ createSpy: vi.fn })]
-      }
-    });
+        plugins: [testRouter, createTestingPinia({ createSpy: vi.fn })],
+      },
+    })
 
-    await flushPromises();
-    expect(wrapper.text()).toContain('Invalid product ID');
-  });
+    await flushPromises()
+    expect(wrapper.text()).toContain('Invalid product ID')
+  })
 
   it('hides add to cart button when unauthenticated', async () => {
-    (productService.getProductById as any).mockResolvedValue(mockProduct);
+    ;(productService.getProductById as any).mockResolvedValue(mockProduct)
 
     const wrapper = mount(ProductView, {
       global: {
-        plugins: [router, createTestingPinia({ 
-          createSpy: vi.fn,
-          initialState: { auth: { token: null } }
-        })]
-      }
-    });
+        plugins: [
+          router,
+          createTestingPinia({
+            createSpy: vi.fn,
+            initialState: { auth: { token: null } },
+          }),
+        ],
+      },
+    })
 
-    await flushPromises();
-    expect(wrapper.find('[data-test="add-to-cart-btn"]').exists()).toBe(false);
-  });
+    await flushPromises()
+    expect(wrapper.find('[data-test="add-to-cart-btn"]').exists()).toBe(false)
+  })
 
   it('shows add to cart button when authenticated', async () => {
-    (productService.getProductById as any).mockResolvedValue(mockProduct);
+    ;(productService.getProductById as any).mockResolvedValue(mockProduct)
 
     const wrapper = mount(ProductView, {
       global: {
-        plugins: [router, createTestingPinia({ 
-          createSpy: vi.fn,
-          initialState: { auth: { token: 'fake-token' } }
-        })]
-      }
-    });
+        plugins: [
+          router,
+          createTestingPinia({
+            createSpy: vi.fn,
+            initialState: { auth: { token: 'fake-token' } },
+          }),
+        ],
+      },
+    })
 
-    await flushPromises();
-    expect(wrapper.find('[data-test="add-to-cart-btn"]').exists()).toBe(true);
-  });
+    await flushPromises()
+    expect(wrapper.find('[data-test="add-to-cart-btn"]').exists()).toBe(true)
+  })
 
   it('shows quantity selector if product is already in cart', async () => {
-    (productService.getProductById as any).mockResolvedValue(mockProduct);
+    ;(productService.getProductById as any).mockResolvedValue(mockProduct)
 
     const wrapper = mount(ProductView, {
       global: {
-        plugins: [router, createTestingPinia({ 
-          createSpy: vi.fn,
-          initialState: { 
-            auth: { token: 'fake-token' },
-            cart: { items: [{ ...mockProduct, quantity: 2 }] }
-          }
-        })]
-      }
-    });
+        plugins: [
+          router,
+          createTestingPinia({
+            createSpy: vi.fn,
+            initialState: {
+              auth: { token: 'fake-token' },
+              cart: { items: [{ ...mockProduct, quantity: 2 }] },
+            },
+          }),
+        ],
+      },
+    })
 
-    await flushPromises();
-    expect(wrapper.find('.quantity-selector').exists()).toBe(true);
-    expect(wrapper.get('.qty-value').text()).toBe('2 in cart');
-    expect(wrapper.find('[data-test="add-to-cart-btn"]').exists()).toBe(false);
-  });
+    await flushPromises()
+    expect(wrapper.find('.quantity-selector').exists()).toBe(true)
+    expect(wrapper.get('.qty-value').text()).toBe('2 in cart')
+    expect(wrapper.find('[data-test="add-to-cart-btn"]').exists()).toBe(false)
+  })
 
   it('increments quantity when clicking +', async () => {
-    (productService.getProductById as any).mockResolvedValue(mockProduct);
-    const pinia = createTestingPinia({ 
+    ;(productService.getProductById as any).mockResolvedValue(mockProduct)
+    const pinia = createTestingPinia({
       createSpy: vi.fn,
-      initialState: { 
+      initialState: {
         auth: { token: 'fake-token' },
-        cart: { items: [{ ...mockProduct, quantity: 2 }] }
-      }
-    });
-    const cartStore = useCartStore();
+        cart: { items: [{ ...mockProduct, quantity: 2 }] },
+      },
+    })
+    const cartStore = useCartStore()
 
     const wrapper = mount(ProductView, {
       global: {
-        plugins: [router, pinia]
-      }
-    });
+        plugins: [router, pinia],
+      },
+    })
 
-    await flushPromises();
-    await wrapper.find('[aria-label="Increase quantity"]').trigger('click');
-    expect(cartStore.updateQuantity).toHaveBeenCalledWith(1, 3);
-  });
+    await flushPromises()
+    await wrapper.find('[aria-label="Increase quantity"]').trigger('click')
+    expect(cartStore.updateQuantity).toHaveBeenCalledWith(1, 3)
+  })
 
   it('decrements quantity when clicking -', async () => {
-    (productService.getProductById as any).mockResolvedValue(mockProduct);
-    const pinia = createTestingPinia({ 
+    ;(productService.getProductById as any).mockResolvedValue(mockProduct)
+    const pinia = createTestingPinia({
       createSpy: vi.fn,
-      initialState: { 
+      initialState: {
         auth: { token: 'fake-token' },
-        cart: { items: [{ ...mockProduct, quantity: 2 }] }
-      }
-    });
-    const cartStore = useCartStore();
+        cart: { items: [{ ...mockProduct, quantity: 2 }] },
+      },
+    })
+    const cartStore = useCartStore()
 
     const wrapper = mount(ProductView, {
       global: {
-        plugins: [router, pinia]
-      }
-    });
+        plugins: [router, pinia],
+      },
+    })
 
-    await flushPromises();
-    await wrapper.find('[aria-label="Decrease quantity"]').trigger('click');
-    expect(cartStore.updateQuantity).toHaveBeenCalledWith(1, 1);
-  });
+    await flushPromises()
+    await wrapper.find('[aria-label="Decrease quantity"]').trigger('click')
+    expect(cartStore.updateQuantity).toHaveBeenCalledWith(1, 1)
+  })
 
   it('shows "Removed from cart" feedback when last item is removed', async () => {
-    (productService.getProductById as any).mockResolvedValue(mockProduct);
-    const pinia = createTestingPinia({ 
+    ;(productService.getProductById as any).mockResolvedValue(mockProduct)
+    const pinia = createTestingPinia({
       createSpy: vi.fn,
-      initialState: { 
+      initialState: {
         auth: { token: 'fake-token' },
-        cart: { items: [{ ...mockProduct, quantity: 1 }] }
-      }
-    });
+        cart: { items: [{ ...mockProduct, quantity: 1 }] },
+      },
+    })
 
     const wrapper = mount(ProductView, {
       global: {
-        plugins: [router, pinia]
-      }
-    });
+        plugins: [router, pinia],
+      },
+    })
 
-    await flushPromises();
-    
+    await flushPromises()
+
     // Decrease quantity from 1 to 0
-    await wrapper.find('[aria-label="Decrease quantity"]').trigger('click');
-    
+    await wrapper.find('[aria-label="Decrease quantity"]').trigger('click')
+
     // Manually update state since testing pinia doesn't execute actions
-    const cartStore = useCartStore();
-    cartStore.items = [];
-    
+    const cartStore = useCartStore()
+    cartStore.items = []
+
     // It should now show "Add to Cart" again
-    await flushPromises();
-    expect(wrapper.find('[data-test="add-to-cart-btn"]').text()).toBe('Add to Cart');
-    
+    await flushPromises()
+    expect(wrapper.find('[data-test="add-to-cart-btn"]').text()).toBe('Add to Cart')
+
     // Check if toast text exists in DOM
-    expect(wrapper.text()).toContain('Item removed from cart');
-  });
+    expect(wrapper.text()).toContain('Item removed from cart')
+  })
 
   it('shows correct wishlist button title based on state', async () => {
-    (productService.getProductById as any).mockResolvedValue(mockProduct);
-    
+    ;(productService.getProductById as any).mockResolvedValue(mockProduct)
+
     // Case 1: Not in wishlist
     const wrapper = mount(ProductView, {
       global: {
-        plugins: [router, createTestingPinia({ 
-          createSpy: vi.fn,
-          stubActions: false,
-          initialState: { 
-            auth: { token: 'fake-token' },
-            wishlist: { items: [] }
-          }
-        })]
-      }
-    });
+        plugins: [
+          router,
+          createTestingPinia({
+            createSpy: vi.fn,
+            stubActions: false,
+            initialState: {
+              auth: { token: 'fake-token' },
+              wishlist: { items: [] },
+            },
+          }),
+        ],
+      },
+    })
 
-    await flushPromises();
-    expect(wrapper.find('.wishlist-btn').attributes('title')).toBe('Add to wishlist');
+    await flushPromises()
+    expect(wrapper.find('.product-wishlist-btn').attributes('title')).toBe('Add to wishlist')
 
     // Case 2: In wishlist
     const wrapperIn = mount(ProductView, {
       global: {
-        plugins: [router, createTestingPinia({ 
-          createSpy: vi.fn,
-          stubActions: false,
-          initialState: { 
-            auth: { token: 'fake-token' },
-            wishlist: { items: [mockProduct] }
-          }
-        })]
-      }
-    });
+        plugins: [
+          router,
+          createTestingPinia({
+            createSpy: vi.fn,
+            stubActions: false,
+            initialState: {
+              auth: { token: 'fake-token' },
+              wishlist: { items: [mockProduct] },
+            },
+          }),
+        ],
+      },
+    })
 
-    await flushPromises();
-    expect(wrapperIn.find('.wishlist-btn').attributes('title')).toBe('Remove from wishlist');
-  });
+    await flushPromises()
+    expect(wrapperIn.find('.product-wishlist-btn').attributes('title')).toBe('Remove from wishlist')
+  })
 
   it('hides wishlist button when unauthenticated', async () => {
-    (productService.getProductById as any).mockResolvedValue(mockProduct);
+    ;(productService.getProductById as any).mockResolvedValue(mockProduct)
 
     const wrapper = mount(ProductView, {
       global: {
-        plugins: [router, createTestingPinia({ 
-          createSpy: vi.fn,
-          initialState: { 
-            auth: { token: null }
-          }
-        })]
-      }
-    });
+        plugins: [
+          router,
+          createTestingPinia({
+            createSpy: vi.fn,
+            initialState: {
+              auth: { token: null },
+            },
+          }),
+        ],
+      },
+    })
 
-    await flushPromises();
-    expect(wrapper.find('.wishlist-btn').exists()).toBe(false);
-  });
-});
+    await flushPromises()
+    expect(wrapper.find('.wishlist-btn').exists()).toBe(false)
+  })
+})

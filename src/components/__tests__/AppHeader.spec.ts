@@ -28,22 +28,22 @@ vi.mock('@/services/productService', () => ({
 }))
 
 describe('AppHeader', () => {
-  let router: any;
+  let router: any
 
   beforeEach(async () => {
-    vi.clearAllMocks();
+    vi.clearAllMocks()
     router = createRouter({
       history: createWebHistory(),
       routes: [
         { path: '/', name: 'home', component: { template: '<div>Home</div>' } },
-        { 
-          path: '/cart', 
-          name: 'cart', 
+        {
+          path: '/cart',
+          name: 'cart',
           component: { template: '<div>Cart</div>' },
-          meta: { requiresAuth: true } 
-        }
-      ]
-    });
+          meta: { requiresAuth: true },
+        },
+      ],
+    })
   })
 
   it('renders branding and dynamic navigation links', async () => {
@@ -59,14 +59,14 @@ describe('AppHeader', () => {
             initialState: {
               auth: { isAuthenticated: false, user: null },
               cart: { items: [] },
-              wishlist: { items: [] }
-            }
-          })
+              wishlist: { items: [] },
+            },
+          }),
         ],
         stubs: {
           // RouterLink: RouterLinkStub, // Use real router but stub components
           ThemeToggle: true,
-          LoginModal: true
+          LoginModal: true,
         },
       },
     })
@@ -90,13 +90,13 @@ describe('AppHeader', () => {
             initialState: {
               auth: { isAuthenticated: false, user: null },
               cart: { items: [] },
-              wishlist: { items: [] }
-            }
-          })
+              wishlist: { items: [] },
+            },
+          }),
         ],
         stubs: {
           ThemeToggle: true,
-          LoginModal: true
+          LoginModal: true,
         },
       },
     })
@@ -114,18 +114,18 @@ describe('AppHeader', () => {
           createTestingPinia({
             createSpy: vi.fn,
             initialState: {
-              auth: { 
+              auth: {
                 token: 'fake-token',
-                user: { name: { firstname: 'John' } } 
+                user: { name: { firstname: 'John' } },
               },
               cart: { items: [] },
-              wishlist: { items: [] }
-            }
-          })
+              wishlist: { items: [] },
+            },
+          }),
         ],
         stubs: {
           ThemeToggle: true,
-          LoginModal: true
+          LoginModal: true,
         },
       },
     })
@@ -145,13 +145,13 @@ describe('AppHeader', () => {
             initialState: {
               auth: { token: 'fake-token' },
               cart: { items: [{ id: 1, quantity: 3 }] },
-              wishlist: { items: [] }
-            }
-          })
+              wishlist: { items: [] },
+            },
+          }),
         ],
         stubs: {
           ThemeToggle: true,
-          LoginModal: true
+          LoginModal: true,
         },
       },
     })
@@ -164,7 +164,7 @@ describe('AppHeader', () => {
     // Setup router at /cart
     await router.push('/cart')
     await router.isReady()
-    
+
     const wrapper = mount(AppHeader, {
       global: {
         plugins: [
@@ -174,18 +174,18 @@ describe('AppHeader', () => {
             initialState: {
               auth: { token: 'fake-token', user: { name: { firstname: 'John' } } },
               cart: { items: [] },
-              wishlist: { items: [] }
-            }
-          })
+              wishlist: { items: [] },
+            },
+          }),
         ],
         stubs: { ThemeToggle: true, LoginModal: true },
       },
     })
 
     const pushSpy = vi.spyOn(router, 'push')
-    
+
     await wrapper.find('.logout-btn').trigger('click')
-    
+
     expect(pushSpy).toHaveBeenCalledWith('/')
   })
 
@@ -200,19 +200,19 @@ describe('AppHeader', () => {
             initialState: {
               auth: { token: 'fake-token' },
               cart: { items: [] },
-              wishlist: { items: [{ id: 1 }] }
-            }
-          })
+              wishlist: { items: [{ id: 1 }] },
+            },
+          }),
         ],
         stubs: {
           ThemeToggle: true,
-          LoginModal: true
+          LoginModal: true,
         },
       },
     })
 
     expect(wrapper.find('.wishlist-btn').exists()).toBe(true)
     // The wishlist heart icon should have a badge with '1'
-    expect(wrapper.find('.wishlist-btn .cart-badge').text()).toBe('1')
+    expect(wrapper.find('.wishlist-btn .wishlist-badge').text()).toBe('1')
   })
 })
