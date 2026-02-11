@@ -1,94 +1,104 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import type { Product } from '@/types';
-import { productService } from '@/services/productService';
-import { formatCategory } from '@/utils/formatters';
-import { useCartStore } from '@/stores/cart';
-import { useAuthStore } from '@/stores/auth';
-import { useWishlistStore } from '@/stores/wishlist';
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import type { Product } from '@/types'
+import { productService } from '@/services/productService'
+import { useCartStore } from '@/stores/cart'
+import { useAuthStore } from '@/stores/auth'
+import ProductWishlistButton from '@/components/ProductWishlistButton.vue'
+import CategoryTag from '@/components/CategoryTag.vue'
+import ProductRating from '@/components/ProductRating.vue'
 
-const route = useRoute();
-const product = ref<Product | null>(null);
-const isLoading = ref(true);
-const error = ref<string | null>(null);
-const cartStore = useCartStore();
-const authStore = useAuthStore();
-const wishlistStore = useWishlistStore();
-const isAdding = ref(false);
-const showRemovedFeedback = ref(false);
+const route = useRoute()
+const product = ref<Product | null>(null)
+const isLoading = ref(true)
+const error = ref<string | null>(null)
+const cartStore = useCartStore()
+const authStore = useAuthStore()
+const isAdding = ref(false)
+const showRemovedFeedback = ref(false)
 
-const cartItem = computed(() => 
-  product.value ? cartStore.items.find(item => item.id === product.value!.id) : null
-);
-
-const handleToggleWishlist = () => {
-  if (authStore.isAuthenticated && product.value) {
-    wishlistStore.toggleWishlist(product.value);
-  }
-};
+const cartItem = computed(() =>
+  product.value ? cartStore.items.find((item) => item.id === product.value!.id) : null,
+)
 
 const handleUpdateQuantity = (quantity: number) => {
   if (product.value) {
     if (quantity === 0 && cartItem.value?.quantity === 1) {
-      showRemovedFeedback.value = true;
+      showRemovedFeedback.value = true
       setTimeout(() => {
-        showRemovedFeedback.value = false;
-      }, 2000);
+        showRemovedFeedback.value = false
+      }, 2000)
     }
-    cartStore.updateQuantity(product.value.id, quantity);
+    cartStore.updateQuantity(product.value.id, quantity)
   }
-};
+}
 
 const handleAddToCart = () => {
   if (product.value) {
-    isAdding.value = true;
-    cartStore.addItem(product.value);
-    
+    isAdding.value = true
+    cartStore.addItem(product.value)
+
     // Short delay for the spinner
     setTimeout(() => {
-      isAdding.value = false;
-    }, 500);
+      isAdding.value = false
+    }, 500)
   }
-};
+}
 
 const fetchProduct = async () => {
-  const idParam = route.params.id;
-  const id = Number(idParam);
-  
+  const idParam = route.params.id
+  const id = Number(idParam)
+
   if (!idParam || isNaN(id)) {
-    error.value = 'Invalid product ID.';
-    isLoading.value = false;
-    return;
+    error.value = 'Invalid product ID.'
+    isLoading.value = false
+    return
   }
 
   try {
-    isLoading.value = true;
-    error.value = null;
-    product.value = await productService.getProductById(id);
+    isLoading.value = true
+    error.value = null
+    product.value = await productService.getProductById(id)
   } catch (err) {
-    error.value = 'Failed to load product details. Please try again later.';
-    console.error('Error fetching product:', err);
+    error.value = 'Failed to load product details. Please try again later.'
+    console.error('Error fetching product:', err)
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
-};
+}
 
 // Re-fetch when ID changes (e.g., navigating between products)
-watch(() => route.params.id, () => {
-  fetchProduct();
-});
+watch(
+  () => route.params.id,
+  () => {
+    fetchProduct()
+  },
+)
 
 onMounted(() => {
-  fetchProduct();
-});
+  fetchProduct()
+})
 </script>
 
 <template>
   <div class="product-view">
     <!-- Back Navigation -->
     <router-link to="/" class="back-link">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
       Back to collection
     </router-link>
 
@@ -117,15 +127,10 @@ onMounted(() => {
 
         <!-- Info Section -->
         <div class="info-section">
-          <span class="category-tag">{{ formatCategory(product.category) }}</span>
+          <CategoryTag :category="product.category" />
           <h1 class="product-title">{{ product.title }}</h1>
-          
-          <div class="rating-box">
-            <div class="stars">
-              <span v-for="i in 5" :key="i" :class="['star', { active: i <= Math.round(product.rating.rate) }]">★</span>
-            </div>
-            <span class="rating-text">{{ product.rating.rate }} ({{ product.rating.count }} reviews)</span>
-          </div>
+
+          <ProductRating :rate="product.rating.rate" :count="product.rating.count" mode="extended" />
 
           <div class="price-box">
             <span class="price">${{ product.price.toFixed(2) }}</span>
@@ -140,42 +145,32 @@ onMounted(() => {
             <template v-if="authStore.isAuthenticated">
               <!-- Quantity Controls if in cart -->
               <div v-if="cartItem" class="quantity-selector">
-                <button 
-                  @click="handleUpdateQuantity(cartItem.quantity - 1)" 
+                <button
+                  @click="handleUpdateQuantity(cartItem.quantity - 1)"
                   class="qty-btn"
                   aria-label="Decrease quantity"
-                >-</button>
+                >
+                  -
+                </button>
                 <span class="qty-value">{{ cartItem.quantity }} in cart</span>
-                <button 
-                  @click="handleUpdateQuantity(cartItem.quantity + 1)" 
+                <button
+                  @click="handleUpdateQuantity(cartItem.quantity + 1)"
                   class="qty-btn"
                   aria-label="Increase quantity"
-                >+</button>
+                >
+                  +
+                </button>
               </div>
 
               <!-- Add to Cart Button if not in cart -->
-              <button 
-                v-else
-                class="add-to-cart-btn" 
-                @click="handleAddToCart"
-                :disabled="isAdding"
-              >
+              <button v-else class="add-to-cart-btn" @click="handleAddToCart" :disabled="isAdding">
                 <span v-if="isAdding" class="spinner-tiny"></span>
                 <span v-else-if="showRemovedFeedback">Removed from cart</span>
                 <span v-else>Add to Cart</span>
               </button>
 
               <!-- Wishlist Button -->
-              <button 
-                class="wishlist-btn" 
-                :class="{ active: product && wishlistStore.isInWishlist(product.id) }"
-                @click="handleToggleWishlist"
-                :title="product && wishlistStore.isInWishlist(product.id) ? 'Remove from wishlist' : 'Add to wishlist'"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" :fill="product && wishlistStore.isInWishlist(product.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                </svg>
-              </button>
+              <ProductWishlistButton v-if="product" :product="product" size="md" />
             </template>
           </div>
         </div>
@@ -206,7 +201,8 @@ onMounted(() => {
   }
 }
 
-.loading-state, .error-state {
+.loading-state,
+.error-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -226,7 +222,9 @@ onMounted(() => {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .product-grid {
@@ -265,18 +263,7 @@ onMounted(() => {
   gap: 1.5rem;
 }
 
-.category-tag {
-  display: inline-block;
-  align-self: flex-start;
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 0.35rem 0.75rem;
-  border-radius: var(--radius-full);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
+
 
 .product-title {
   font-size: 2rem;
@@ -286,25 +273,7 @@ onMounted(() => {
   letter-spacing: -0.02em;
 }
 
-.rating-box {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
 
-.stars {
-  color: var(--color-divider);
-  font-size: 1.25rem;
-
-  .star.active {
-    color: #f59e0b; // Yellow-500
-  }
-}
-
-.rating-text {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
 
 .price-box {
   .price {
@@ -331,7 +300,7 @@ onMounted(() => {
   flex-direction: column;
   gap: 1rem;
   margin-top: 1rem;
-  
+
   @media (min-width: 640px) {
     flex-direction: row;
   }
@@ -396,32 +365,6 @@ onMounted(() => {
 
   &:active {
     transform: translateY(0);
-  }
-}
-
-.wishlist-btn {
-  width: 52px;
-  height: 52px;
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  color: var(--text-secondary);
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    color: #ef4444; // Red-500
-    border-color: #fecaca; // Red-200
-    background-color: #fef2f2; // Red-50
-  }
-
-  &.active {
-    color: #ef4444;
-    border-color: #fecaca;
-    background-color: #fef2f2;
   }
 }
 
