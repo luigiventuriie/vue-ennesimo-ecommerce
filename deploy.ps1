@@ -19,7 +19,7 @@ git add -A
 git commit -m 'deploy'
 
 Write-Host "Deploying to https://luigiventuriie.github.io/vue-ennesimo-ecommerce/" -ForegroundColor Cyan
-git push -f git@github.com:luigiventuriie/vue-ennesimo-ecommerce.git main:gh-pages
+git push -f https://github.com/luigiventuriie/vue-ennesimo-ecommerce.git main:gh-pages
 
 Set-Location ..
 
