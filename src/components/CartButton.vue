@@ -18,6 +18,7 @@ const handleCartClick = () => {
   <button
     v-if="authStore.isAuthenticated"
     class="icon-btn cart-btn"
+    data-test="cart-btn"
     @click="handleCartClick"
     aria-label="View shopping cart"
   >

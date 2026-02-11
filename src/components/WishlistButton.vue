@@ -18,6 +18,7 @@ const handleWishlistClick = () => {
   <button
     v-if="authStore.isAuthenticated"
     class="icon-btn wishlist-btn"
+    data-test="wishlist-btn"
     @click="handleWishlistClick"
     aria-label="View wishlist"
   >
@@ -36,7 +37,12 @@ const handleWishlistClick = () => {
         d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
       ></path>
     </svg>
-    <span v-if="wishlistStore.totalItems > 0" :key="wishlistStore.totalItems" class="cart-badge">
+    <span
+      v-if="wishlistStore.totalItems > 0"
+      :key="wishlistStore.totalItems"
+      class="wishlist-badge"
+      data-test="wishlist-badge"
+    >
       {{ wishlistStore.totalItems }}
     </span>
   </button>
@@ -62,7 +68,7 @@ const handleWishlistClick = () => {
   }
 }
 
-.cart-badge {
+.wishlist-badge {
   position: absolute;
   top: -2px;
   right: -2px;

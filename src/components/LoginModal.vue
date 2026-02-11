@@ -49,12 +49,13 @@ const handleLogin = async () => {
 
 <template>
   <transition name="modal-fade">
-    <div v-if="isOpen" class="modal-overlay" @click.self="emit('close')">
+    <div v-if="isOpen" class="modal-overlay" @click.self="emit('close')" data-test="login-modal">
       <div class="modal-content" role="dialog" aria-modal="true">
         <BaseButton
           variant="ghost"
           size="sm"
           class="close-btn"
+          data-test="close-modal"
           @click="emit('close')"
           aria-label="Close modal"
         >
@@ -94,6 +95,7 @@ const handleLogin = async () => {
               required
               :disabled="isSubmitting"
               autofocus
+              data-test="username-input"
             />
             <p class="hint">Try: <span>johnd</span></p>
           </div>
@@ -107,6 +109,7 @@ const handleLogin = async () => {
               placeholder="Enter your password"
               required
               :disabled="isSubmitting"
+              data-test="password-input"
             />
             <p class="hint">Try: <span>m38rmF$</span></p>
           </div>
@@ -116,7 +119,8 @@ const handleLogin = async () => {
             class="submit-btn"
             :isLoading="isSubmitting"
             block
-          >
+            data-test="login-button"
+            >
             Login
           </BaseButton>
         </form>

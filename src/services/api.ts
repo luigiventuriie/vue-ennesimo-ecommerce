@@ -42,19 +42,24 @@ export const api = {
     })
 
     if (!response.ok) {
-      let errorMessage = `API Error: ${response.statusText}`
+      // Clone the response so we can read it multiple times if needed
+      const clonedResponse = response.clone()
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`
+      
       try {
-        const errorData = await response.json()
-        errorMessage = errorData.message || errorMessage
+        const errorData = await clonedResponse.json()
+        // Check various common error message fields
+        errorMessage = errorData.message || errorData.error || errorData.msg || errorMessage
       } catch (e) {
         // If JSON parsing fails, try reading as text
         try {
           const textError = await response.text()
           if (textError) errorMessage = textError
         } catch (textErr) {
-          // Fallback to statusText
+          // Keep the default errorMessage
         }
       }
+      
       throw new Error(errorMessage)
     }
     return response.json()
