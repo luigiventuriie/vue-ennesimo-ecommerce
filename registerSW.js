@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/vue-ennesimo-ecommerce/sw.js', { scope: '/vue-ennesimo-ecommerce/' })})}
