@@ -123,7 +123,7 @@ describe('ProductView', () => {
     });
 
     await flushPromises();
-    expect(wrapper.find('.add-to-cart-btn').exists()).toBe(false);
+    expect(wrapper.find('[data-test="add-to-cart-btn"]').exists()).toBe(false);
   });
 
   it('shows add to cart button when authenticated', async () => {
@@ -139,7 +139,7 @@ describe('ProductView', () => {
     });
 
     await flushPromises();
-    expect(wrapper.find('.add-to-cart-btn').exists()).toBe(true);
+    expect(wrapper.find('[data-test="add-to-cart-btn"]').exists()).toBe(true);
   });
 
   it('shows quantity selector if product is already in cart', async () => {
@@ -160,7 +160,7 @@ describe('ProductView', () => {
     await flushPromises();
     expect(wrapper.find('.quantity-selector').exists()).toBe(true);
     expect(wrapper.get('.qty-value').text()).toBe('2 in cart');
-    expect(wrapper.find('.add-to-cart-btn').exists()).toBe(false);
+    expect(wrapper.find('[data-test="add-to-cart-btn"]').exists()).toBe(false);
   });
 
   it('increments quantity when clicking +', async () => {
@@ -234,7 +234,7 @@ describe('ProductView', () => {
     
     // It should now show "Removed from cart" in the add to cart button (which reappears)
     await flushPromises();
-    expect(wrapper.find('.add-to-cart-btn').text()).toBe('Removed from cart');
+    expect(wrapper.find('[data-test="add-to-cart-btn"]').text()).toBe('Removed from cart');
   });
 
   it('shows correct wishlist button title based on state', async () => {
