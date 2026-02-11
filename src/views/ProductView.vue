@@ -10,6 +10,7 @@ import CategoryTag from '@/components/CategoryTag.vue'
 import ProductRating from '@/components/ProductRating.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseSpinner from '@/components/BaseSpinner.vue'
+import ProductToast, { type Toast } from '@/components/ProductToast.vue'
 
 const route = useRoute()
 const product = ref<Product | null>(null)
@@ -18,7 +19,30 @@ const error = ref<string | null>(null)
 const cartStore = useCartStore()
 const authStore = useAuthStore()
 const isAdding = ref(false)
-const showRemovedFeedback = ref(false)
+
+const toasts = ref<Toast[]>([])
+let nextToastId = 0
+
+const addToast = (
+  message: string,
+  type: 'success' | 'error' | 'info' = 'info',
+  duration = 2000,
+) => {
+  const id = nextToastId++
+  const toast: Toast = { id, message, type }
+  toasts.value.push(toast)
+
+  setTimeout(() => {
+    removeToast(id)
+  }, duration)
+}
+
+const removeToast = (id: number) => {
+  const index = toasts.value.findIndex((t) => t.id === id)
+  if (index !== -1) {
+    toasts.value.splice(index, 1)
+  }
+}
 
 const cartItem = computed(() =>
   product.value ? cartStore.items.find((item) => item.id === product.value!.id) : null,
@@ -27,10 +51,7 @@ const cartItem = computed(() =>
 const handleUpdateQuantity = (quantity: number) => {
   if (product.value) {
     if (quantity === 0 && cartItem.value?.quantity === 1) {
-      showRemovedFeedback.value = true
-      setTimeout(() => {
-        showRemovedFeedback.value = false
-      }, 2000)
+      addToast('Item removed from cart', 'info')
     }
     cartStore.updateQuantity(product.value.id, quantity)
   }
@@ -41,9 +62,9 @@ const handleAddToCart = () => {
     isAdding.value = true
     cartStore.addItem(product.value)
 
-    // Short delay for the spinner
     setTimeout(() => {
       isAdding.value = false
+      addToast('Item added to cart', 'success')
     }, 500)
   }
 }
@@ -132,7 +153,11 @@ onMounted(() => {
           <CategoryTag :category="product.category" />
           <h1 class="product-title">{{ product.title }}</h1>
 
-          <ProductRating :rate="product.rating.rate" :count="product.rating.count" mode="extended" />
+          <ProductRating
+            :rate="product.rating.rate"
+            :count="product.rating.count"
+            mode="extended"
+          />
 
           <div class="price-box">
             <span class="price">${{ product.price.toFixed(2) }}</span>
@@ -174,8 +199,7 @@ onMounted(() => {
                 block
                 data-test="add-to-cart-btn"
               >
-                <span v-if="showRemovedFeedback">Removed from cart</span>
-                <span v-else>Add to Cart</span>
+                Add to Cart
               </BaseButton>
 
               <!-- Wishlist Button -->
@@ -185,6 +209,8 @@ onMounted(() => {
         </div>
       </div>
     </div>
+
+    <ProductToast :toasts="toasts" />
   </div>
 </template>
 
@@ -250,8 +276,6 @@ onMounted(() => {
   gap: 1.5rem;
 }
 
-
-
 .product-title {
   font-size: 2rem;
   line-height: 1.2;
@@ -259,8 +283,6 @@ onMounted(() => {
   font-weight: 700;
   letter-spacing: -0.02em;
 }
-
-
 
 .price-box {
   .price {
@@ -287,6 +309,7 @@ onMounted(() => {
   flex-direction: column;
   gap: 1rem;
   margin-top: 1rem;
+  position: relative; /* For toast positioning */
 
   @media (min-width: 640px) {
     flex-direction: row;
@@ -304,14 +327,10 @@ onMounted(() => {
   flex: 1;
   justify-content: space-between;
 
-
-
   .qty-value {
     font-weight: 700;
     color: var(--text-primary);
     font-size: 0.95rem;
   }
 }
-
-
 </style>
