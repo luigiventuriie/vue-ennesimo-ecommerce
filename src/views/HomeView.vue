@@ -15,41 +15,54 @@ const isLoading = ref(false)
 const error = ref<string | null>(null)
 const searchStore = useSearchStore()
 
-// Sorting & Pagination State
 const sortOption = ref('alphabetical-asc')
 const currentPage = ref(1)
 const itemsPerPage = ref(8)
 
+let abortController: AbortController | null = null
+
 const fetchProducts = async () => {
+  // Cancel previous request if it exists
+  if (abortController) {
+    abortController.abort()
+  }
+
+  // Create new abort controller for this request
+  abortController = new AbortController()
+
   isLoading.value = true
   error.value = null
-  currentPage.value = 1 // Reset pagination on new fetch (category change)
 
   try {
     const category = route.query.category as string
-    if (category) {
-      products.value = await productService.getProductsByCategory(category)
-    } else {
-      products.value = await productService.getProducts()
+    const searchQuery = searchStore.debouncedQuery
+
+    // Use the new filtered products method with abort signal
+    products.value = await productService.getFilteredProducts(
+      {
+        category: category || undefined,
+        search: searchQuery || undefined,
+      },
+      abortController.signal,
+    )
+  } catch (err: any) {
+    // Don't show error if request was aborted
+    if (err.name === 'AbortError') {
+      return
     }
-  } catch (err) {
+
     error.value = 'Failed to load products. Please try again later.'
     console.error('Error fetching products:', err)
   } finally {
     isLoading.value = false
+    abortController = null
   }
 }
 
-// Search & Filter Logic
-const filteredProducts = computed(() => {
-  if (!searchStore.searchQuery) return products.value
-  const query = searchStore.searchQuery.toLowerCase()
-  return products.value.filter(p => p.title?.toLowerCase().includes(query))
-})
+const filteredProducts = computed(() => products.value)
 
-// Sorting Logic
 const sortedProducts = computed(() => {
-  const list = [...filteredProducts.value]
+  const list = [...filteredProducts?.value]
   switch (sortOption.value) {
     case 'alphabetical-asc':
       return list.sort((a, b) => a.title.localeCompare(b.title))
@@ -66,7 +79,6 @@ const sortedProducts = computed(() => {
   }
 })
 
-// Pagination Logic
 const totalPages = computed(() => Math.ceil(sortedProducts.value.length / itemsPerPage.value))
 
 const paginatedProducts = computed(() => {
@@ -80,14 +92,21 @@ const handlePageChange = (page: number) => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-// Watch for search changes to reset page
-watch(() => searchStore.searchQuery, () => {
-  currentPage.value = 1
-})
+// Watch for search changes - always refetch from API and reset page
+watch(
+  () => searchStore.debouncedQuery,
+  () => {
+    currentPage.value = 1
+    fetchProducts()
+  },
+  { immediate: false },
+)
 
+// Watch for category changes - refetch from API
 watch(
   () => route.query.category,
   () => {
+    currentPage.value = 1
     fetchProducts()
   },
 )
@@ -95,10 +114,6 @@ watch(
 onMounted(() => {
   fetchProducts()
 })
-
-const clearFilter = () => {
-  // Clearing the query will trigger the watcher
-}
 </script>
 
 <template>
@@ -108,14 +123,18 @@ const clearFilter = () => {
         <h1 class="page-title">
           {{ route.query.category ? `${route.query.category} Products` : 'All Products' }}
         </h1>
-        <p v-if="filteredProducts.length > 0" class="product-count">
+        <p v-if="!isLoading && filteredProducts?.length > 0" class="product-count">
           {{ filteredProducts.length }} items found
-          <span v-if="searchStore.searchQuery">for "{{ searchStore.searchQuery }}"</span>
+          <span v-if="searchStore.debouncedQuery">for "{{ searchStore.debouncedQuery }}"</span>
+        </p>
+        <p v-else-if="isLoading && searchStore.debouncedQuery" class="product-count loading">
+          <BaseSpinner size="sm" />
+          Searching for "{{ searchStore.debouncedQuery }}"...
         </p>
       </div>
 
       <!-- Controls (Sort) -->
-      <div v-if="!isLoading && products.length > 0" class="controls">
+      <div v-if="!isLoading && products?.length > 0" class="controls">
         <div class="sort-wrapper">
           <label for="sort" class="sort-label">Sort by:</label>
           <select id="sort" v-model="sortOption" class="sort-select">
@@ -143,11 +162,13 @@ const clearFilter = () => {
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="filteredProducts.length === 0" class="empty-state">
+    <div v-else-if="filteredProducts?.length === 0" class="empty-state">
       <div class="empty-icon">🔍</div>
-      <p v-if="searchStore.searchQuery">No products match your search "{{ searchStore.searchQuery }}".</p>
+      <p v-if="searchStore.debouncedQuery">
+        No products match your search "{{ searchStore.debouncedQuery }}".
+      </p>
       <p v-else>No products found in this category.</p>
-      <BaseButton @click="searchStore.clearSearch(); fetchProducts()">Clear All Filters</BaseButton>
+      <BaseButton @click="searchStore.clearSearch()">Clear Search</BaseButton>
     </div>
 
     <!-- Product Grid & Pagination -->
@@ -165,7 +186,7 @@ const clearFilter = () => {
         >
           &larr; Previous
         </BaseButton>
-        
+
         <div class="page-numbers">
           <BaseButton
             v-for="page in totalPages"
@@ -228,6 +249,13 @@ const clearFilter = () => {
   color: var(--text-secondary);
   font-size: 0.95rem;
   font-weight: 500;
+
+  &.loading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-primary);
+  }
 }
 
 .controls {
@@ -280,8 +308,6 @@ const clearFilter = () => {
   justify-content: center;
   gap: 1.5rem;
 }
-
-
 
 .page-numbers {
   display: flex;

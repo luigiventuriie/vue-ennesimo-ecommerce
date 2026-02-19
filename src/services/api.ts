@@ -7,9 +7,10 @@ export const api = {
     authToken = token
   },
 
-  async get<T>(endpoint: string): Promise<T> {
+  async get<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      ...(options?.headers as Record<string, string>),
     }
 
     if (authToken) {
@@ -17,18 +18,22 @@ export const api = {
     }
 
     const response = await fetch(`${BASE_URL}${endpoint}`, {
+      method: 'GET',
+      ...options,
       headers,
     })
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response}`)
+      throw new Error(`API Error: ${response.status} ${response.statusText}`)
     }
+
     return response.json()
   },
 
-  async post<T>(endpoint: string, data: any): Promise<T> {
+  async post<T>(endpoint: string, data: any, options?: RequestInit): Promise<T> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      ...(options?.headers as Record<string, string>),
     }
 
     if (authToken) {
@@ -37,29 +42,25 @@ export const api = {
 
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: 'POST',
+      ...options,
       headers,
       body: JSON.stringify(data),
     })
 
     if (!response.ok) {
-      // Clone the response so we can read it multiple times if needed
       const clonedResponse = response.clone()
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`
-      
+
       try {
         const errorData = await clonedResponse.json()
-        // Check various common error message fields
         errorMessage = errorData.message || errorData.error || errorData.msg || errorMessage
-      } catch (e) {
-        // If JSON parsing fails, try reading as text
+      } catch {
         try {
           const textError = await response.text()
           if (textError) errorMessage = textError
-        } catch (textErr) {
-          // Keep the default errorMessage
-        }
+        } catch {}
       }
-      
+
       throw new Error(errorMessage)
     }
     return response.json()

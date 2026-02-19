@@ -11,7 +11,7 @@ import { productService } from '@/services/productService'
 vi.mock('@/services/productService', () => ({
   productService: {
     getProducts: vi.fn(),
-    getProductsByCategory: vi.fn(),
+    getFilteredProducts: vi.fn(),
   },
 }))
 
@@ -53,7 +53,7 @@ describe('HomeView', () => {
   })
 
   it('fetches all products on mount when no category is specified', async () => {
-    ;(productService.getProducts as any).mockResolvedValue(mockProducts)
+    ;(productService.getFilteredProducts as any).mockResolvedValue(mockProducts)
 
     const wrapper = mount(HomeView, {
       global: {
@@ -63,13 +63,13 @@ describe('HomeView', () => {
 
     await flushPromises()
 
-    expect(productService.getProducts).toHaveBeenCalled()
+    expect(productService.getFilteredProducts).toHaveBeenCalled()
     expect(wrapper.findAll('.product-card').length).toBe(2)
     expect(wrapper.text()).toContain('All Products')
   })
 
   it('fetches products by category when specified in query', async () => {
-    ;(productService.getProductsByCategory as any).mockResolvedValue([mockProducts[0]])
+    ;(productService.getFilteredProducts as any).mockResolvedValue([mockProducts[0]])
 
     // Set query before mount
     await router.push({ path: '/', query: { category: 'electronics' } })
@@ -82,7 +82,13 @@ describe('HomeView', () => {
 
     await flushPromises()
 
-    expect(productService.getProductsByCategory).toHaveBeenCalledWith('electronics')
+    expect(productService.getFilteredProducts).toHaveBeenCalledWith(
+      {
+        category: 'electronics',
+        search: undefined,
+      },
+      expect.any(AbortSignal),
+    )
     expect(wrapper.findAll('.product-card').length).toBe(1)
     expect(wrapper.text()).toContain('electronics Products')
   })
@@ -94,7 +100,7 @@ describe('HomeView', () => {
       resolvePromise = resolve
     })
 
-    ;(productService.getProducts as any).mockReturnValue(promise)
+    ;(productService.getFilteredProducts as any).mockReturnValue(promise)
 
     const wrapper = mount(HomeView, {
       global: {
@@ -112,7 +118,7 @@ describe('HomeView', () => {
   })
 
   it('shows error state when fetching fails', async () => {
-    ;(productService.getProducts as any).mockRejectedValue(new Error('API Error'))
+    ;(productService.getFilteredProducts as any).mockRejectedValue(new Error('API Error'))
 
     const wrapper = mount(HomeView, {
       global: {
@@ -120,75 +126,78 @@ describe('HomeView', () => {
       },
     })
 
-    await flushPromises();
+    await flushPromises()
 
-    expect(wrapper.find('.error-state').exists()).toBe(true);
-    expect(wrapper.text()).toContain('Failed to load products');
-  });
+    expect(wrapper.find('.error-state').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Failed to load products')
+  })
 
   it('filters products based on search query', async () => {
-    (productService.getProducts as any).mockResolvedValue(mockProducts);
-    
+    ;(productService.getFilteredProducts as any).mockResolvedValue([mockProducts[0]])
+
     const wrapper = mount(HomeView, {
       global: {
-        plugins: [router, createTestingPinia({ 
-          createSpy: vi.fn,
-          initialState: { 
-            search: { searchQuery: 'Product 1' }
-          }
-        })]
-      }
-    });
+        plugins: [
+          router,
+          createTestingPinia({
+            createSpy: vi.fn,
+            initialState: {
+              search: { debouncedQuery: 'Product 1' },
+            },
+          }),
+        ],
+      },
+    })
 
-    await flushPromises();
-    const cards = wrapper.findAllComponents(ProductCard);
-    expect(cards.length).toBe(1);
-    expect(cards[0]!.props('product').title).toBe('Product 1');
-  });
+    await flushPromises()
+    const cards = wrapper.findAllComponents(ProductCard)
+    expect(cards.length).toBe(1)
+    expect(cards[0]!.props('product').title).toBe('Product 1')
+  })
 
   it('sorts products by price ascending', async () => {
-    (productService.getProducts as any).mockResolvedValue(mockProducts);
-    
+    ;(productService.getFilteredProducts as any).mockResolvedValue(mockProducts)
+
     const wrapper = mount(HomeView, {
       global: {
-        plugins: [router, createTestingPinia({ createSpy: vi.fn })]
-      }
-    });
+        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
+      },
+    })
 
-    await flushPromises();
-    
+    await flushPromises()
+
     // Set sort option to price-low (default is now alphabetical-asc)
-    await wrapper.find('#sort').setValue('price-low');
-    
-    const cards = wrapper.findAllComponents(ProductCard);
-    expect(cards[0]!.props('product').price).toBe(10);
-    expect(cards[1]!.props('product').price).toBe(20);
-  });
+    await wrapper.find('#sort').setValue('price-low')
+
+    const cards = wrapper.findAllComponents(ProductCard)
+    expect(cards[0]!.props('product').price).toBe(10)
+    expect(cards[1]!.props('product').price).toBe(20)
+  })
 
   it('paginates products correctly', async () => {
     // Mock 10 products
     const manyProducts = Array.from({ length: 10 }, (_, i) => ({
       ...mockProducts[0],
       id: i + 1,
-      title: `Product ${i + 1}`
-    }));
-    (productService.getProducts as any).mockResolvedValue(manyProducts);
-    
+      title: `Product ${i + 1}`,
+    }))
+    ;(productService.getFilteredProducts as any).mockResolvedValue(manyProducts)
+
     const wrapper = mount(HomeView, {
       global: {
-        plugins: [router, createTestingPinia({ createSpy: vi.fn })]
-      }
-    });
+        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
+      },
+    })
 
-    await flushPromises();
-    
+    await flushPromises()
+
     // itemsPerPage is 8, so first page should have 8
-    expect(wrapper.findAllComponents(ProductCard).length).toBe(8);
-    expect(wrapper.find('[data-test="pagination"]').exists()).toBe(true);
-    expect(wrapper.findAll('[data-test="page-num-btn"]').length).toBe(2);
+    expect(wrapper.findAllComponents(ProductCard).length).toBe(8)
+    expect(wrapper.find('[data-test="pagination"]').exists()).toBe(true)
+    expect(wrapper.findAll('[data-test="page-num-btn"]').length).toBe(2)
 
     // Go to next page
-    await wrapper.find('.page-btn.next').trigger('click');
-    expect(wrapper.findAllComponents(ProductCard).length).toBe(2);
-  });
+    await wrapper.find('.page-btn.next').trigger('click')
+    expect(wrapper.findAllComponents(ProductCard).length).toBe(2)
+  })
 })

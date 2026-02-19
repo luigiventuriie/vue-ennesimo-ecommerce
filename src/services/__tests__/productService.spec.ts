@@ -12,7 +12,7 @@ describe('productService', () => {
 
   describe('getCategories', () => {
     it('should fetch all categories', async () => {
-      const mockCategories = ['electronics', 'jewelery', 'men\'s clothing', 'women\'s clothing']
+      const mockCategories = ['electronics', 'jewelery', "men's clothing", "women's clothing"]
       vi.mocked(api.get).mockResolvedValue(mockCategories)
 
       const result = await productService.getCategories()
@@ -39,8 +39,8 @@ describe('productService', () => {
           description: 'Test description',
           category: 'electronics',
           image: 'test.jpg',
-          rating: { rate: 4.5, count: 100 }
-        }
+          rating: { rate: 4.5, count: 100 },
+        },
       ]
       vi.mocked(api.get).mockResolvedValue(mockProducts)
 
@@ -68,14 +68,13 @@ describe('productService', () => {
           description: 'Test description',
           category: 'electronics',
           image: 'test.jpg',
-          rating: { rate: 4.5, count: 50 }
-        }
+          rating: { rate: 4.5, count: 50 },
+        },
       ]
       vi.mocked(api.get).mockResolvedValue(mockProducts)
 
-      const result = await productService.getProductsByCategory('electronics')
-
-      expect(api.get).toHaveBeenCalledWith('/products/category/electronics')
+      const result = await productService.getFilteredProducts({ category: 'electronics' })
+      expect(api.get).toHaveBeenCalledWith('/products/category/electronics', { signal: undefined })
       expect(result).toEqual(mockProducts)
     })
 
@@ -83,7 +82,9 @@ describe('productService', () => {
       const mockError = new Error('Category not found')
       vi.mocked(api.get).mockRejectedValue(mockError)
 
-      await expect(productService.getProductsByCategory('invalid')).rejects.toThrow('Category not found')
+      await expect(productService.getFilteredProducts({ category: 'invalid' })).rejects.toThrow(
+        'Category not found',
+      )
     })
   })
 
@@ -96,7 +97,7 @@ describe('productService', () => {
         description: 'Test description',
         category: 'electronics',
         image: 'test.jpg',
-        rating: { rate: 4.5, count: 100 }
+        rating: { rate: 4.5, count: 100 },
       }
       vi.mocked(api.get).mockResolvedValue(mockProduct)
 

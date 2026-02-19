@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import { useSearchStore } from '@/stores/search'
 import { useRouter } from 'vue-router'
+import { computed } from 'vue'
 
 const searchStore = useSearchStore()
 const router = useRouter()
+
+// Used on animation on lens icon
+const isDebouncing = computed(() => {
+  return searchStore.searchQuery !== searchStore.debouncedQuery
+})
 </script>
 
 <template>
@@ -20,6 +26,7 @@ const router = useRouter()
         stroke-linecap="round"
         stroke-linejoin="round"
         class="search-icon"
+        :class="{ searching: isDebouncing }"
       >
         <circle cx="11" cy="11" r="8"></circle>
         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -30,6 +37,7 @@ const router = useRouter()
         placeholder="Search products..."
         class="search-input"
         @focus="router.push('/')"
+        maxlength="100"
       />
       <button
         v-if="searchStore.searchQuery"
@@ -68,6 +76,22 @@ const router = useRouter()
     color: var(--text-secondary);
     pointer-events: none;
     z-index: 1;
+    transition: all 0.3s ease;
+
+    &.searching {
+      color: var(--color-primary);
+      animation: pulse 1s ease-in-out infinite;
+    }
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
   }
 
   .search-input {
@@ -103,6 +127,7 @@ const router = useRouter()
     width: 20px;
     height: 20px;
     border-radius: 50%;
+    transition: all 0.2s;
 
     &:hover {
       background-color: var(--border-color);
